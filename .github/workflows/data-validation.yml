@@ -1,0 +1,162 @@
+name: Periodic Data Validation
+
+on:
+  schedule:
+    # Run every hour during business hours (9 AM to 5 PM UTC, Monday to Friday)
+    - cron: '0 9-17 * * 1-5'
+    # Run every 4 hours during off-hours and weekends
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  data-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Python dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Set up environment variables
+      run: |
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+        echo "PASSWORD=${{ secrets.PASSWORD }}" >> $GITHUB_ENV
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> $GITHUB_ENV
+        echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> $GITHUB_ENV
+        echo "SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}" >> $GITHUB_ENV
+        echo "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" >> $GITHUB_ENV
+        echo "DEFAULT_EMAIL_RECIPIENTS=${{ secrets.DEFAULT_EMAIL_RECIPIENTS }}" >> $GITHUB_ENV
+
+    - name: Run data validation for all tables
+      run: |
+        cd backend
+        python -c "
+        import asyncio
+        import sys
+        import os
+        sys.path.append('.')
+        
+        from app.validators.data_validator import DataValidator
+        from app.notifications.email_service import EmailService
+        from app.database.connection import get_supabase_client
+        
+        async def run_all_validations():
+            try:
+                # Get list of tables to validate
+                supabase = get_supabase_client()
+                
+                # Define tables to validate (you can modify this list)
+                tables_to_validate = ['users', 'transactions', 'products', 'orders']
+                
+                validator = DataValidator()
+                email_service = EmailService()
+                
+                total_anomalies = 0
+                results_summary = []
+                
+                for table_name in tables_to_validate:
+                    print(f'Validating table: {table_name}')
+                    
+                    try:
+                        result = await validator.validate_table(table_name)
+                        anomalies_count = result.get('anomalies_count', 0)
+                        total_anomalies += anomalies_count
+                        
+                        results_summary.append({
+                            'table': table_name,
+                            'status': result.get('status', 'unknown'),
+                            'anomalies': anomalies_count
+                        })
+                        
+                        # Send email if anomalies detected
+                        if anomalies_count > 0:
+                            await email_service.send_anomaly_alert(table_name, result)
+                            print(f'Anomaly alert sent for {table_name}: {anomalies_count} anomalies')
+                        else:
+                            print(f'No anomalies found in {table_name}')
+                            
+                    except Exception as e:
+                        print(f'Error validating {table_name}: {str(e)}')
+                        results_summary.append({
+                            'table': table_name,
+                            'status': 'error',
+                            'anomalies': 0,
+                            'error': str(e)
+                        })
+                
+                # Print summary
+                print(f'\\n=== Validation Summary ===')
+                print(f'Tables validated: {len(tables_to_validate)}')
+                print(f'Total anomalies detected: {total_anomalies}')
+                
+                for result in results_summary:
+                    status_emoji = '✅' if result['status'] == 'success' else '⚠️' if result['status'] == 'warning' else '❌'
+                    print(f'{status_emoji} {result[\"table\"]}: {result[\"status\"]} ({result[\"anomalies\"]} anomalies)')
+                
+                # Set GitHub Actions output for notifications
+                if total_anomalies > 0:
+                    print(f'::warning::Found {total_anomalies} anomalies across {len([r for r in results_summary if r[\"anomalies\"] > 0])} tables')
+                
+            except Exception as e:
+                print(f'::error::Critical error during validation: {str(e)}')
+                sys.exit(1)
+        
+        asyncio.run(run_all_validations())
+        "
+
+    - name: Create validation report
+      if: always()
+      run: |
+        cd backend
+        python -c "
+        import json
+        from datetime import datetime
+        
+        # Create a simple validation report
+        report = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'workflow_run': '${{ github.run_id }}',
+            'status': 'completed',
+            'repository': '${{ github.repository }}',
+            'branch': '${{ github.ref_name }}'
+        }
+        
+        with open('validation_report.json', 'w') as f:
+            json.dump(report, f, indent=2)
+        
+        print('Validation report created')
+        "
+
+    - name: Upload validation report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: validation-report-${{ github.run_id }}
+        path: backend/validation_report.json
+        retention-days: 30
+
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "::error::Data validation workflow failed. Please check the logs and investigate."
