@@ -1,16 +1,56 @@
 # IDX Data Validation Dashboard
 
-A comprehensive dashboard for monitoring data quality and validation with automated anomaly detection and email notifications. Built with React frontend, Python FastAPI backend, and automated workflows using GitHub Actions.
+A comprehensive dashboard for monitoring IDX (Indonesian Stock Exchange) financial data quality with automated anomaly detection and email notifications. Built with React frontend, Python FastAPI backend, and automated workflows using GitHub Actions.
 
 ## 🚀 Features
 
-- **Real-time Data Validation**: Monitor multiple tables with different validation approaches
-- **Anomaly Detection**: Statistical, business rule, data quality, and time series validations
+- **IDX Financial Data Validation**: Specialized validation for Indonesian Stock Exchange data
+- **Multi-Table Support**: Different validation approaches for different financial data types
+- **Real-time Anomaly Detection**: 
+  - Financial statement changes (>50% with trend analysis)
+  - Daily price movements (>35%)
+  - Dividend yield anomalies (>50% yield or >10% change)
+  - Price data consistency checks
 - **Automated Email Alerts**: Instant notifications when anomalies are detected
 - **Interactive Dashboard**: Charts and visualizations for data trends and status
 - **Periodic Validation**: Automated workflows for continuous monitoring
 - **Configurable Rules**: Customize validation rules per table
 - **Daily Summaries**: Automated daily reports of validation activities
+
+## 📊 IDX Tables Monitored
+
+### Financial Statements
+- **`idx_combine_financials_annual`**: Annual financial data validation
+- **`idx_combine_financials_quarterly`**: Quarterly financial data validation
+
+### Market Data  
+- **`idx_daily_data`**: Daily stock price movements
+- **`idx_dividend`**: Dividend yield and changes analysis
+- **`idx_all_time_price`**: All-time vs. periodic price consistency
+
+## 🔍 Validation Rules
+
+### Financial Data Validation
+```python
+# Annual/Quarterly Financial Changes
+- Alert if absolute change > 50% 
+- Consider average change trends (>30% for annual, >25% for quarterly)
+- Analyze: revenue, net_income, total_assets, total_equity
+```
+
+### Market Data Validation
+```python
+# Daily Price Movements
+- Alert if close price change > 35%
+
+# Dividend Analysis  
+- Alert if yield > 50%
+- Alert if yield change > 10 percentage points
+
+# Price Consistency
+- Validate 30d_high <= 90d_high <= 52w_high <= all_time_high
+- Check current price within recent ranges
+```
 
 ## 🏗️ Architecture
 

@@ -90,6 +90,15 @@ class DataValidator:
         except Exception as e:
             # Return empty DataFrame if table doesn't exist or error occurs
             return pd.DataFrame()
+
+    async def _fetch_ticker_data(self, table_name: str, symbol: str) -> pd.DataFrame:
+        """Fetch specific ticker data from Supabase table"""
+        try:
+            response = self.supabase.table(table_name).select("*").eq("symbol", symbol).execute()
+            return pd.DataFrame(response.data)
+        except Exception as e:
+            # Return empty DataFrame if table doesn't exist or error occurs
+            return pd.DataFrame()
     
     async def _get_validation_config(self, table_name: str) -> Dict[str, Any]:
         """Get validation configuration for the table"""

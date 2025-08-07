@@ -57,19 +57,25 @@ jobs:
         import os
         sys.path.append('.')
         
-        from app.validators.data_validator import DataValidator
+        from app.validators.idx_financial_validator import IDXFinancialValidator
         from app.notifications.email_service import EmailService
         from app.database.connection import get_supabase_client
         
         async def run_all_validations():
             try:
-                # Get list of tables to validate
+                # Get list of IDX tables to validate
                 supabase = get_supabase_client()
                 
-                # Define tables to validate (you can modify this list)
-                tables_to_validate = ['users', 'transactions', 'products', 'orders']
+                # IDX financial tables to validate
+                tables_to_validate = [
+                    'idx_combine_financials_annual',
+                    'idx_combine_financials_quarterly', 
+                    'idx_daily_data',
+                    'idx_dividend',
+                    'idx_all_time_price'
+                ]
                 
-                validator = DataValidator()
+                validator = IDXFinancialValidator()
                 email_service = EmailService()
                 
                 total_anomalies = 0

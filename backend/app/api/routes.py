@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 import json
 
 from ..database.connection import get_supabase_client
-from ..validators.data_validator import DataValidator
+from ..validators.idx_financial_validator import IDXFinancialValidator
 from ..notifications.email_service import EmailService
 
 validation_router = APIRouter()
@@ -18,12 +18,13 @@ async def get_tables():
     """Get list of available tables for validation"""
     try:
         supabase = get_supabase_client()
-        # This would typically query your database schema
-        # For now, returning a mock response
+        # IDX financial tables for validation
         tables = [
-            {"name": "users", "last_validated": "2025-08-05T10:00:00Z"},
-            {"name": "transactions", "last_validated": "2025-08-05T09:30:00Z"},
-            {"name": "products", "last_validated": "2025-08-05T08:45:00Z"}
+            {"name": "idx_combine_financials_annual", "last_validated": "2025-08-05T10:00:00Z", "description": "Annual financial data"},
+            {"name": "idx_combine_financials_quarterly", "last_validated": "2025-08-05T09:30:00Z", "description": "Quarterly financial data"},
+            {"name": "idx_daily_data", "last_validated": "2025-08-05T09:45:00Z", "description": "Daily stock price data"},
+            {"name": "idx_dividend", "last_validated": "2025-08-05T08:45:00Z", "description": "Dividend data"},
+            {"name": "idx_all_time_price", "last_validated": "2025-08-05T08:30:00Z", "description": "All-time price data"}
         ]
         return {"tables": tables}
     except Exception as e:
@@ -33,7 +34,7 @@ async def get_tables():
 async def run_validation(table_name: str):
     """Run validation for a specific table"""
     try:
-        validator = DataValidator()
+        validator = IDXFinancialValidator()
         result = await validator.validate_table(table_name)
         
         # Send email if anomalies detected

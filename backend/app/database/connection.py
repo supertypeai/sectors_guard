@@ -38,7 +38,7 @@ def init_database():
     """Initialize database connection"""
     try:
         # Test Supabase connection
-        result = supabase.table('dummy').select("*").limit(1).execute()
+        result = supabase.table('idx_dividend').select("*").limit(1).execute()
         print("✅ Supabase connection successful")
         return True
     except Exception as e:
