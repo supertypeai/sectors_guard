@@ -106,7 +106,7 @@ class IDXFinancialValidator(DataValidator):
             data['year'] = data['date'].dt.year
             
             # Group by symbol and analyze year-over-year changes
-            financial_metrics = ['revenue', 'earnings', 'total_assets', 'total_equity', 'operating_pnl']
+            financial_metrics = ['revenue', 'earnings', 'total_assets']
             available_metrics = [col for col in financial_metrics if col in data.columns]
             
             for symbol in data['symbol'].unique():
@@ -152,6 +152,10 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"Symbol {symbol}: {metric} shows extreme annual changes (>50%) in years {years_affected}. Average absolute change: {avg_abs_change:.1f}%",
                             "severity": "warning"
                         })
+                    
+            if len(anomalies) > 1:
+                for anomaly in anomalies:
+                    print(anomaly['message'])
         
         except Exception as e:
             anomalies.append({
@@ -186,7 +190,7 @@ class IDXFinancialValidator(DataValidator):
             data['date'] = pd.to_datetime(data['date'])
 
             # Group by symbol and analyze year-over-year changes
-            financial_metrics = ['total_revenue', 'earnings', 'total_assets', 'total_equity', 'operating_pnl']
+            financial_metrics = ['total_revenue', 'earnings', 'total_assets']
             available_metrics = [col for col in financial_metrics if col in data.columns]
 
             for symbol in data['symbol'].unique():
@@ -199,7 +203,7 @@ class IDXFinancialValidator(DataValidator):
                     if symbol_data[metric].isna().all():
                         continue
                     symbol_data = symbol_data.copy()
-                    symbol_data[f'{metric}_pct_change'] = symbol_data[metric].pct_change() * 100
+                    symbol_data[f'{metric}_pct_change'] = symbol_data[metric].pct_change(fill_method=None) * 100
                     changes = symbol_data[f'{metric}_pct_change'].dropna()
                     if len(changes) == 0:
                         continue
@@ -218,7 +222,10 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"Symbol {symbol}: {metric} shows extreme quarterly changes (>50%) in periods {periods_affected}. Average absolute change: {avg_abs_change:.1f}%",
                             "severity": "warning"
                         })
-                print(symbol_data[['date', 'total_revenue', 'total_revenue_pct_change', 'earnings', 'earnings_pct_change']])
+                    
+            if len(anomalies) > 1:
+                for anomaly in anomalies:
+                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -275,6 +282,10 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"Symbol {symbol} on {row['date'].strftime('%Y-%m-%d')}: Close price changed by {row['price_pct_change']:.1f}% (close: {row['close']})",
                             "severity": "warning"
                         })
+                    
+            if len(anomalies) > 1:
+                for anomaly in anomalies:
+                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -367,6 +378,10 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"symbol {symbol} year {year}: Yield change {change*100:.2f}% >= 20%",
                             "severity": "warning"
                         })
+                    
+            if len(anomalies) > 1:
+                for anomaly in anomalies:
+                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -449,6 +464,10 @@ class IDXFinancialValidator(DataValidator):
                         "message": f"symbol {symbol}: Price data inconsistencies detected - {'; '.join(issues)}",
                         "severity": "error"
                     })
+                    
+            if len(anomalies) > 1:
+                for anomaly in anomalies:
+                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -528,6 +547,11 @@ class IDXFinancialValidator(DataValidator):
                             })
                 except (ValueError, TypeError):
                     continue
+                
+                    
+            if len(anomalies) > 1:
+                for anomaly in anomalies:
+                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -588,6 +612,9 @@ class IDXFinancialValidator(DataValidator):
                             "severity": "warning"
                         })
                         
+            if len(anomalies) > 1:
+                for anomaly in anomalies:
+                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",

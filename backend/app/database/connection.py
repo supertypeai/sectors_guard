@@ -40,6 +40,15 @@ def init_database():
         # Test Supabase connection
         result = supabase.table('idx_dividend').select("*").limit(1).execute()
         print("✅ Supabase connection successful")
+        
+        # Check if validation tables exist
+        try:
+            supabase.table('validation_results').select("*").limit(1).execute()
+            print("✅ Validation tables exist")
+        except Exception as e:
+            print(f"⚠️  Validation tables missing: {e}")
+            print("💡 Run 'python init_database.py' to create required tables")
+        
         return True
     except Exception as e:
         print(f"❌ Database connection failed: {e}")

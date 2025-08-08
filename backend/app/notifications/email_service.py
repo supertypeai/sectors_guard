@@ -32,7 +32,7 @@ class EmailService:
                 return False
             
             # Generate email content
-            subject = f"🚨 Data Validation Alert: {table_name}"
+            subject = f"🚨 IDX Data Validation Alert: {table_name} - {validation_results.get('anomalies_count', 0)} anomalies detected"
             html_body = self._generate_html_email(table_name, validation_results)
             text_body = self._generate_text_email(table_name, validation_results)
             
@@ -57,16 +57,20 @@ class EmailService:
             if response.data and response.data[0].get("email_recipients"):
                 return response.data[0]["email_recipients"]
             
-            # Return default recipients from environment
-            default_emails = os.getenv("DEFAULT_EMAIL_RECIPIENTS", "")
-            if default_emails:
-                return [email.strip() for email in default_emails.split(",")]
-            
-            return []
-            
         except Exception as e:
-            print(f"Error getting email recipients: {e}")
-            return []
+            print(f"⚠️  Could not get email recipients from config table: {e}")
+            print("💡 Run 'python init_database.py' to create the validation_configs table")
+        
+        # Return default recipients from environment
+        default_emails = os.getenv("DEFAULT_EMAIL_RECIPIENTS", "")
+        if default_emails:
+            recipients = [email.strip() for email in default_emails.split(",") if email.strip()]
+            print(f"📧 Using default email recipients: {recipients}")
+            return recipients
+        
+        print(f"⚠️  No email recipients configured for table: {table_name}")
+        print("💡 Set DEFAULT_EMAIL_RECIPIENTS environment variable or run 'python init_database.py'")
+        return []
     
     def _generate_html_email(self, table_name: str, validation_results: Dict[str, Any]) -> str:
         """Generate HTML email content"""

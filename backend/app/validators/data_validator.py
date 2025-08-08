@@ -4,6 +4,7 @@ Data validation engine for different table types and validation approaches
 
 import pandas as pd
 import numpy as np
+import asyncio
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 import json
@@ -305,18 +306,136 @@ class DataValidator:
         return {"anomalies": anomalies}
     
     async def _store_validation_results(self, results: Dict[str, Any]) -> None:
-        """Store validation results in database"""
+        """Store validation results in database with timeout handling"""
         try:
+            # Prepare validation data
             validation_data = {
                 "table_name": results["table_name"],
-                "validation_type": ",".join(results.get("validations_performed", [])),
                 "status": results["status"],
+                "total_rows": results.get("total_rows", 0),
                 "anomalies_count": results["anomalies_count"],
-                "details": results,
-                "created_at": results["validation_timestamp"],
-                "email_sent": False
+                "anomalies": results.get("anomalies", []),
+                "validations_performed": results.get("validations_performed", []),
+                "validation_timestamp": results["validation_timestamp"]
             }
             
-            self.supabase.table("validation_results").insert(validation_data).execute()
+            # Check anomalies data size
+            anomalies_size = len(json.dumps(validation_data["anomalies"]))
+            print(f"📊 Storing validation results: {validation_data['table_name']}")
+            print(f"   - Anomalies count: {validation_data['anomalies_count']}")
+            print(f"   - Anomalies data size: {anomalies_size} chars")
+            
+            # If anomalies data is too large (>50KB), truncate it
+            if anomalies_size > 50000:
+                print(f"⚠️  Anomalies data too large ({anomalies_size} chars), truncating...")
+                # Keep only first 20 anomalies
+                validation_data["anomalies"] = validation_data["anomalies"][:20]
+                validation_data["anomalies"].append({
+                    "type": "truncated_results",
+                    "message": f"Results truncated - showing first 20 out of {validation_data['anomalies_count']} anomalies",
+                    "severity": "info"
+                })
+                print(f"   - Truncated to {len(json.dumps(validation_data['anomalies']))} chars")
+            
+            # Attempt insert with retry logic
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = self.supabase.table("validation_results").insert(validation_data).execute()
+                    print(f"✅ Stored validation results for {results['table_name']} (attempt {attempt + 1})")
+                    if response.data:
+                        print(f"   - Inserted with ID: {response.data[0].get('id', 'unknown')}")
+                    return
+                except Exception as retry_error:
+                    if attempt < max_retries - 1:
+                        print(f"⚠️  Insert attempt {attempt + 1} failed, retrying... ({retry_error})")
+                        await asyncio.sleep(1)  # Wait 1 second before retry
+                    else:
+                        raise retry_error
+                        
         except Exception as e:
-            print(f"Error storing validation results: {e}")
+            error_msg = str(e)
+            print(f"⚠️  Error storing validation results: {error_msg}")
+            
+            # Store results locally as fallback
+            try:
+                await self._store_results_locally(results)
+            except Exception as local_error:
+                print(f"⚠️  Local storage also failed: {local_error}")
+                
+            # Different error handling based on error type
+            if "timed out" in error_msg.lower():
+                print("💡 Database write timeout detected")
+                print("   - Try reducing anomaly data size")
+                print("   - Check database connection stability")
+            elif "relation" in error_msg.lower() and "does not exist" in error_msg.lower():
+                print("💡 validation_results table not found")
+                print("   - Create the table using SQL provided earlier")
+            elif "permission" in error_msg.lower() or "policy" in error_msg.lower():
+                print("💡 Database permission issue")
+                print("   - Check RLS policies and user permissions")
+            else:
+                print("💡 General database error - continuing without storing results")
+            
+            # Don't fail the validation process due to storage issues
+            
+    async def _store_results_locally(self, results: Dict[str, Any]) -> None:
+        """Store validation results locally as fallback"""
+        try:
+            import os
+            import json
+            from pathlib import Path
+            
+            # Create local storage directory
+            storage_dir = Path("validation_results_local")
+            storage_dir.mkdir(exist_ok=True)
+            
+            # Generate filename with timestamp
+            timestamp = results["validation_timestamp"].replace(":", "-").replace(".", "-")
+            filename = f"{results['table_name']}_{timestamp}.json"
+            filepath = storage_dir / filename
+            
+            # Save to local file
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
+            
+            print(f"💾 Stored results locally: {filepath}")
+            
+        except Exception as e:
+            print(f"⚠️  Local storage failed: {e}")
+    
+    def get_stored_validation_results(self) -> List[Dict[str, Any]]:
+        """Get validation results from local storage"""
+        try:
+            import os
+            import json
+            from pathlib import Path
+            
+            results = []
+            storage_dir = Path("validation_results_local")
+            
+            if storage_dir.exists():
+                # Get all JSON files sorted by modification time (newest first)
+                json_files = sorted(
+                    [f for f in storage_dir.glob("*.json")],
+                    key=lambda x: x.stat().st_mtime,
+                    reverse=True
+                )
+                
+                # Load up to 50 most recent results
+                for filepath in json_files[:50]:
+                    try:
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            result = json.load(f)
+                            # Add an ID based on filename for consistency
+                            result['id'] = filepath.stem
+                            results.append(result)
+                    except Exception as e:
+                        print(f"⚠️  Error loading {filepath}: {e}")
+                        continue
+            
+            return results
+            
+        except Exception as e:
+            print(f"⚠️  Error getting local results: {e}")
+            return []
