@@ -23,7 +23,9 @@ class IDXFinancialValidator(DataValidator):
             'idx_combine_financials_quarterly': self._validate_financial_quarterly,
             'idx_daily_data': self._validate_daily_data,
             'idx_dividend': self._validate_dividend,
-            'idx_all_time_price': self._validate_all_time_price
+            'idx_all_time_price': self._validate_all_time_price,
+            'idx_filings': self._validate_filings,
+            'idx_stock_split': self._validate_stock_split
         }
     
     async def validate_table(self, table_name: str) -> Dict[str, Any]:
@@ -123,7 +125,7 @@ class IDXFinancialValidator(DataValidator):
                     
                     # Calculate year-over-year percentage changes
                     symbol_data = symbol_data.copy()
-                    symbol_data[f'{metric}_pct_change'] = symbol_data[metric].pct_change() * 100
+                    symbol_data[f'{metric}_pct_change'] = symbol_data[metric].pct_change(fill_method=None) * 100
                     
                     # Get changes excluding first row (which will be NaN)
                     changes = symbol_data[f'{metric}_pct_change'].dropna()
@@ -315,9 +317,9 @@ class IDXFinancialValidator(DataValidator):
                     daily_data = None
                 if symbol_data.empty:
                     continue
-                # 1. Cek rata-rata yield per tahun >= 30%
-                yearly_avg = symbol_data.groupby('year')['yield'].mean()
-                yearly_div = symbol_data.groupby('year')['dividend'].mean()
+                # yield per tahun >= 30%
+                yearly_yield = symbol_data.groupby('year')['yield'].sum()
+                yearly_div = symbol_data.groupby('year')['dividend'].sum()
                 this_year = datetime.now().year
 
                 # Calculate average yield for this year
@@ -332,16 +334,14 @@ class IDXFinancialValidator(DataValidator):
                     # print(f"Average close price for {symbol} this year: {avg_close_this_year}")
 
                 div_this_year = yearly_div.get(this_year)
-                if symbol == 'BBCA.JK':
-                    div_this_year /= 2
                 yield_this_year = None
                 if div_this_year is not None and avg_close_this_year is not None and avg_close_this_year != 0:
                     yield_this_year = div_this_year / avg_close_this_year
 
                 if yield_this_year is not None:
-                    yearly_avg.loc[this_year] = yield_this_year
+                    yearly_yield.loc[this_year] = yield_this_year
 
-                high_yield_years = yearly_avg[yearly_avg >= 0.3]
+                high_yield_years = yearly_yield[yearly_yield >= 0.3]
                 if not high_yield_years.empty:
                     for year, avg_yield in high_yield_years.items():
                         anomalies.append({
@@ -352,13 +352,11 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"symbol {symbol} year {year}: Average yield {avg_yield*100:.2f}% >= 30%",
                             "severity": "warning"
                         })
-                # 2. Cek perubahan rata-rata yield per tahun >= 10%
-                yearly_avg_sorted = yearly_avg.sort_index()
-                # yearly_avg_sorted['change'] = yearly_avg_sorted.pct_change().abs()
-                print(yearly_avg_sorted)
-                yearly_avg_change = yearly_avg_sorted.pct_change().abs()
-                print(yearly_avg_change)
-                large_changes = yearly_avg_change[yearly_avg_change >= 0.2]
+                yearly_yield_sorted = yearly_yield.sort_index()
+                # print(yearly_yield_sorted)
+                yearly_yield_change = yearly_yield_sorted.diff().abs()
+                # print(yearly_yield_change)
+                large_changes = yearly_yield_change[yearly_yield_change >= 0.1]
                 if not large_changes.empty:
                     for year, change in large_changes.items():
                         anomalies.append({
@@ -366,7 +364,7 @@ class IDXFinancialValidator(DataValidator):
                             "symbol": symbol,
                             "year": int(year),
                             "yield_change": float(change),
-                            "message": f"symbol {symbol} year {year}: Average yield change {change*100:.2f}% >= 20%",
+                            "message": f"symbol {symbol} year {year}: Yield change {change*100:.2f}% >= 20%",
                             "severity": "warning"
                         })
         except Exception as e:
@@ -455,6 +453,145 @@ class IDXFinancialValidator(DataValidator):
             anomalies.append({
                 "type": "validation_error",
                 "message": f"Error validating all-time price data: {str(e)}",
+                "severity": "error"
+            })
+        return {"anomalies": anomalies}
+    
+    async def _validate_filings(self, data: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Validate idx_filings table
+        Condition: Compare filing price with daily price at the timestamp from idx_daily_data
+        """
+        anomalies = []
+        try:
+            # Ensure required columns
+            required_cols = ['timestamp', 'tickers', 'price']
+            missing_cols = [col for col in required_cols if col not in data.columns]
+            if missing_cols:
+                anomalies.append({
+                    "type": "missing_required_columns",
+                    "columns": missing_cols,
+                    "message": f"Missing required columns: {', '.join(missing_cols)}",
+                    "severity": "error"
+                })
+                return {"anomalies": anomalies}
+
+            # Prepare data
+            data = data.copy()
+            data['timestamp'] = pd.to_datetime(data['timestamp'])
+            data['date'] = data['timestamp'].dt.date
+
+            # Group by ticker for consistency
+            for idx, filing in data.iterrows():
+                try:
+                    # Validate price
+                    if pd.isna(filing['price']) or filing['price'] == '':
+                        continue
+                    filing_price = float(filing['price'])
+                    filing_date = filing['date']
+
+                    # Handle tickers as list or string
+                    tickers = filing['tickers']
+                    if isinstance(tickers, str):
+                        try:
+                            tickers = eval(tickers) if tickers.startswith('[') else [tickers]
+                        except:
+                            tickers = [tickers]
+                    elif not isinstance(tickers, list):
+                        continue
+
+                    for ticker in tickers:
+                        try:
+                            daily_data = await self._fetch_ticker_data('idx_daily_data', ticker)
+                        except Exception:
+                            continue
+                        if daily_data is None or daily_data.empty:
+                            continue
+                        daily_data = daily_data.copy()
+                        daily_data['date'] = pd.to_datetime(daily_data['date']).dt.date
+                        matching_daily = daily_data[daily_data['date'] == filing_date]
+                        if matching_daily.empty:
+                            continue
+                        daily_close = float(matching_daily.iloc[0]['close'])
+                        price_diff_pct = abs(filing_price - daily_close) / daily_close * 100
+                        if price_diff_pct >= 50:
+                            anomalies.append({
+                                "type": "filing_price_discrepancy",
+                                "ticker": ticker,
+                                "filing_date": filing_date.strftime('%Y-%m-%d'),
+                                "filing_timestamp": filing['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
+                                "filing_price": filing_price,
+                                "daily_close_price": daily_close,
+                                "price_difference_pct": round(price_diff_pct, 2),
+                                "message": f"Ticker {ticker} on {filing_date}: Filing price {filing_price} differs from daily close {daily_close} by {price_diff_pct:.1f}% (>= 50%)",
+                                "severity": "warning"
+                            })
+                except (ValueError, TypeError):
+                    continue
+        except Exception as e:
+            anomalies.append({
+                "type": "validation_error",
+                "message": f"Error validating filing data: {str(e)}",
+                "severity": "error"
+            })
+        return {"anomalies": anomalies}
+    
+    async def _validate_stock_split(self, data: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Validate idx_stock_split table
+        Condition: Check if there are 2 stock splits within 2 weeks for the same symbol
+        """
+        anomalies = []
+        try:
+            # Ensure required columns
+            required_cols = ['symbol', 'date', 'split_ratio']
+            missing_cols = [col for col in required_cols if col not in data.columns]
+            if missing_cols:
+                anomalies.append({
+                    "type": "missing_required_columns",
+                    "columns": missing_cols,
+                    "message": f"Missing required columns: {', '.join(missing_cols)}",
+                    "severity": "error"
+                })
+                return {"anomalies": anomalies}
+
+            data = data.copy()
+            data['date'] = pd.to_datetime(data['date'])
+            
+            # Group by symbol and check for close splits
+            for symbol in data['symbol'].unique():
+                symbol_data = data[data['symbol'] == symbol].sort_values('date')
+                
+                if len(symbol_data) < 2:
+                    continue  # Need at least 2 splits to compare
+                
+                # Check each pair of consecutive splits
+                for i in range(len(symbol_data) - 1):
+                    current_split = symbol_data.iloc[i]
+                    next_split = symbol_data.iloc[i + 1]
+                    
+                    # Calculate time difference
+                    time_diff = next_split['date'] - current_split['date']
+                    days_diff = time_diff.days
+                    
+                    # Check if within 2 weeks (14 days)
+                    if days_diff <= 14:
+                        anomalies.append({
+                            "type": "close_stock_splits",
+                            "symbol": symbol,
+                            "first_split_date": current_split['date'].strftime('%Y-%m-%d'),
+                            "second_split_date": next_split['date'].strftime('%Y-%m-%d'),
+                            "days_between": days_diff,
+                            "first_split_ratio": float(current_split['split_ratio']),
+                            "second_split_ratio": float(next_split['split_ratio']),
+                            "message": f"Symbol {symbol}: Two stock splits within {days_diff} days ({current_split['date'].strftime('%Y-%m-%d')} and {next_split['date'].strftime('%Y-%m-%d')})",
+                            "severity": "warning"
+                        })
+                        
+        except Exception as e:
+            anomalies.append({
+                "type": "validation_error",
+                "message": f"Error validating stock split data: {str(e)}",
                 "severity": "error"
             })
         return {"anomalies": anomalies}

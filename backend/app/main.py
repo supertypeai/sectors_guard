@@ -31,8 +31,8 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(validation_router, prefix="/api/v1/validation", tags=["validation"])
-app.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["dashboard"])
+app.include_router(validation_router, prefix="/api/validation", tags=["validation"])
+app.include_router(dashboard_router, prefix="/api/dashboard", tags=["dashboard"])
 
 @app.on_event("startup")
 async def startup_event():
