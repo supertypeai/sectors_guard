@@ -81,11 +81,20 @@ async def get_tables():
         raise HTTPException(status_code=500, detail=str(e))
 
 @validation_router.post("/run/{table_name}")
-async def run_validation(table_name: str):
-    """Run validation for a specific table"""
+async def run_validation(
+    table_name: str,
+    start_date: Optional[str] = Query(None, description="Start date filter (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date filter (YYYY-MM-DD)")
+):
+    """Run validation for a specific table with optional date filter"""
     try:
+        print(f"🔍 [API] Running validation for table: {table_name}")
+        print(f"📅 [API] Date filter - Start: {start_date}, End: {end_date}")
+        
         validator = IDXFinancialValidator()
-        result = await validator.validate_table(table_name)
+        result = await validator.validate_table(table_name, start_date=start_date, end_date=end_date)
+        
+        print(f"✅ [API] Validation completed for {table_name} - Status: {result.get('status')}, Anomalies: {result.get('anomalies_count', 0)}")
         
         # Send email if anomalies detected
         if result.get("anomalies_count", 0) > 0:
@@ -94,6 +103,79 @@ async def run_validation(table_name: str):
         
         return result
     except Exception as e:
+        print(f"❌ [API] Error running validation for {table_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@validation_router.post("/run-all")
+async def run_all_validations(
+    start_date: Optional[str] = Query(None, description="Start date filter (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date filter (YYYY-MM-DD)")
+):
+    """Run validation for all tables with optional date filter"""
+    try:
+        print(f"🚀 [API] Running validation for ALL tables")
+        print(f"📅 [API] Date filter - Start: {start_date}, End: {end_date}")
+        
+        # Get all available tables. `get_tables()` returns a dict with key 'tables'.
+        # Be defensive: some callers may return {'data': {'tables': [...]}} so handle both shapes.
+        tables_response = await get_tables()
+        if isinstance(tables_response, dict):
+            if "tables" in tables_response:
+                tables = tables_response["tables"]
+            elif "data" in tables_response and isinstance(tables_response["data"], dict) and "tables" in tables_response["data"]:
+                tables = tables_response["data"]["tables"]
+            else:
+                tables = []
+        else:
+            tables = []
+
+        print(f"📊 [API] Found {len(tables)} tables to validate")
+        
+        validator = IDXFinancialValidator()
+        results = []
+        
+        for table in tables:
+            try:
+                print(f"🔄 [API] Processing table: {table['name']}")
+                result = await validator.validate_table(table["name"], start_date=start_date, end_date=end_date)
+                results.append(result)
+                
+                print(f"✅ [API] Completed {table['name']} - Status: {result.get('status')}, Anomalies: {result.get('anomalies_count', 0)}")
+                
+                # Send email if anomalies detected
+                if result.get("anomalies_count", 0) > 0:
+                    email_service = EmailService()
+                    await email_service.send_anomaly_alert(table["name"], result)
+                    
+            except Exception as table_error:
+                print(f"❌ [API] Error processing table {table['name']}: {str(table_error)}")
+                results.append({
+                    "table_name": table["name"],
+                    "status": "error",
+                    "error": str(table_error),
+                    "validation_timestamp": datetime.now().isoformat()
+                })
+        
+        # Summary
+        total_tables = len(results)
+        successful_validations = len([r for r in results if r.get("status") != "error"])
+        total_anomalies = sum(r.get("anomalies_count", 0) for r in results)
+        
+        print(f"📈 [API] All validations completed - {successful_validations}/{total_tables} successful, {total_anomalies} total anomalies")
+        
+        return {
+            "status": "success",
+            "summary": {
+                "total_tables": total_tables,
+                "successful_validations": successful_validations,
+                "total_anomalies": total_anomalies
+            },
+            "results": results,
+            "validation_timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"❌ [API] Error running all validations: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @dashboard_router.get("/results")
@@ -103,6 +185,8 @@ async def get_validation_results(
 ):
     """Get validation results with fallback to local storage"""
     try:
+        print(f"📊 [API] Getting validation results - table: {table_name}, limit: {limit}")
+        
         # Try to get from database first
         supabase = get_supabase_client()
         query = supabase.table("validation_results").select("*").order("validation_timestamp", desc=True).limit(limit)
@@ -112,14 +196,23 @@ async def get_validation_results(
         
         response = query.execute()
         
+        print(f"🔍 [API] Database query returned {len(response.data) if response.data else 0} results")
+        
         if response.data:
-            return {"status": "success", "data": response.data, "source": "database"}
+            return {
+                "status": "success", 
+                "data": {
+                    "results": response.data
+                }, 
+                "source": "database"
+            }
             
     except Exception as db_error:
         print(f"⚠️  Database query failed: {db_error}")
     
     # Fallback to local storage
     try:
+        print("📁 [API] Falling back to local storage")
         from app.validators.data_validator import DataValidator
         validator = DataValidator()
         local_results = validator.get_stored_validation_results()
@@ -131,9 +224,13 @@ async def get_validation_results(
         # Apply limit
         local_results = local_results[:limit]
         
+        print(f"📁 [API] Local storage returned {len(local_results)} results")
+        
         return {
             "status": "success", 
-            "data": local_results, 
+            "data": {
+                "results": local_results
+            }, 
             "source": "local_storage",
             "message": "Using local storage - database unavailable"
         }
@@ -143,7 +240,9 @@ async def get_validation_results(
         return {
             "status": "error", 
             "message": "Both database and local storage unavailable",
-            "data": []
+            "data": {
+                "results": []
+            }
         }
 
 @dashboard_router.get("/stats")
@@ -248,7 +347,28 @@ async def get_validation_trends():
 async def get_table_validation_config(table_name: str):
     """Get validation configuration for a specific table"""
     try:
-        # IDX table configurations
+        supabase = get_supabase_client()
+
+        # First try to read saved config from validation_configs table
+        try:
+            resp = supabase.table("validation_configs").select("*").eq("table_name", table_name).limit(1).execute()
+            if resp.data and len(resp.data) > 0:
+                cfg = resp.data[0]
+                # Normalize shape for frontend: include validation_rules (or config_data), types, emails, threshold
+                validation_rules = cfg.get("validation_rules") or cfg.get("config_data") or cfg.get("config_data") or {}
+                return {
+                    "table_name": cfg.get("table_name"),
+                    "validation_rules": validation_rules,
+                    "validation_types": cfg.get("validation_types") or cfg.get("validation_types") or [],
+                    "email_recipients": cfg.get("email_recipients") or cfg.get("email_recipients") or [],
+                    "error_threshold": cfg.get("error_threshold") or cfg.get("error_threshold") or 5,
+                    "enabled": cfg.get("enabled", True)
+                }
+        except Exception:
+            # If DB read fails, fallback to idx_configs below
+            pass
+
+        # IDX table configurations (defaults)
         idx_configs = {
             "idx_combine_financials_annual": {
                 "table_name": table_name,
@@ -332,6 +452,47 @@ async def get_table_validation_config(table_name: str):
             raise HTTPException(status_code=404, detail=f"Configuration not found for table: {table_name}")
             
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@validation_router.post("/config/{table_name}")
+async def save_table_validation_config(table_name: str, payload: Dict[str, Any]):
+    """Save or update validation configuration for a specific table"""
+    try:
+        supabase = get_supabase_client()
+        print(f"💾 [API] Saving validation config for {table_name}")
+        # Normalize incoming payload
+        validation_rules = payload.get("validation_rules") or payload.get("config_data") or payload.get("rules") or {}
+        validation_types = payload.get("validation_types") or payload.get("validation_types") or payload.get("types") or []
+        email_recipients = payload.get("email_recipients") or payload.get("emailRecipients") or []
+        error_threshold = payload.get("error_threshold") or payload.get("errorThreshold") or payload.get("error_threshold", 5)
+        enabled = payload.get("enabled") if "enabled" in payload else payload.get("is_active", True)
+
+        # Check if config exists
+        existing = supabase.table("validation_configs").select("*").eq("table_name", table_name).execute()
+
+        record = {
+            "table_name": table_name,
+            "validation_rules": validation_rules,
+            "config_data": validation_rules,
+            "validation_types": validation_types,
+            "email_recipients": email_recipients,
+            "error_threshold": error_threshold,
+            "enabled": enabled,
+        }
+
+        if existing.data:
+            # Update existing
+            resp = supabase.table("validation_configs").update(record).eq("table_name", table_name).execute()
+            print(f"💾 [API] Updated config for {table_name}")
+        else:
+            # Insert new
+            resp = supabase.table("validation_configs").insert(record).execute()
+            print(f"💾 [API] Inserted config for {table_name}")
+
+        return {"status": "success", "table_name": table_name}
+    except Exception as e:
+        print(f"❌ [API] Error saving config for {table_name}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @dashboard_router.get("/charts/table-status")

@@ -2,20 +2,27 @@ import { Box, Paper, Typography } from '@mui/material';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
 const COLORS = {
-  healthy: '#4CAF50',
-  warning: '#FF9800',
-  error: '#f44336',
+  healthy: '#10b981', // Green for healthy
+  warning: '#f59e0b', // Orange for warning
+  error: '#ef4444',   // Red for error
 };
 
 function TableStatusChart({ data, loading }) {
   if (loading) {
     return (
-      <Paper elevation={3} sx={{ p: 2, height: 400 }}>
-        <Typography variant="h6" gutterBottom>
+      <Paper 
+        sx={{ 
+          p: 3, 
+          height: 400,
+          backgroundColor: '#1a1a2e',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}
+      >
+        <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
           Table Status Distribution
         </Typography>
         <Box display="flex" justifyContent="center" alignItems="center" height="80%">
-          <Typography>Loading...</Typography>
+          <Typography sx={{ color: '#94a3b8' }}>Loading...</Typography>
         </Box>
       </Paper>
     );
@@ -28,8 +35,15 @@ function TableStatusChart({ data, loading }) {
   }));
 
   return (
-    <Paper elevation={3} sx={{ p: 2, height: 400 }}>
-      <Typography variant="h6" gutterBottom>
+    <Paper 
+      sx={{ 
+        p: 3, 
+        height: 400,
+        backgroundColor: '#1a1a2e',
+        border: '1px solid rgba(37, 99, 235, 0.2)',
+      }}
+    >
+      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
         Table Status Distribution
       </Typography>
       <ResponsiveContainer width="100%" height="85%">

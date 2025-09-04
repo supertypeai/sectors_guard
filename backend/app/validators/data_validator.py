@@ -100,6 +100,15 @@ class DataValidator:
         except Exception as e:
             # Return empty DataFrame if table doesn't exist or error occurs
             return pd.DataFrame()
+
+    async def _get_company_data(self, symbol: str) -> pd.DataFrame:
+        """Fetch specific company data from Supabase table"""
+        try:
+            response = self.supabase.table("idx_company_profile").select("*").eq("symbol", symbol).execute()
+            return pd.DataFrame(response.data)
+        except Exception as e:
+            # Return empty DataFrame if table doesn't exist or error occurs
+            return pd.DataFrame()
     
     async def _get_validation_config(self, table_name: str) -> Dict[str, Any]:
         """Get validation configuration for the table"""
@@ -108,7 +117,24 @@ class DataValidator:
             response = self.supabase.table("validation_configs").select("*").eq("table_name", table_name).execute()
             
             if response.data:
-                return response.data[0]["validation_rules"]
+                row = response.data[0]
+                # Base rules may be stored under different keys
+                base_rules = row.get("validation_rules") or row.get("config_data") or {}
+
+                # Merge top-level columns into the returned config so validator sees thresholds and types
+                merged = dict(base_rules) if isinstance(base_rules, dict) else {}
+                # error_threshold and validation_types/email_recipients may be stored as separate columns
+                if "error_threshold" in row:
+                    merged["error_threshold"] = row.get("error_threshold")
+                if "validation_types" in row and row.get("validation_types"):
+                    # normalize to types key expected by validator
+                    merged["types"] = row.get("validation_types")
+                if "validation_types" not in row and "types" in base_rules:
+                    merged.setdefault("types", base_rules.get("types"))
+                if "email_recipients" in row:
+                    merged["email_recipients"] = row.get("email_recipients")
+
+                return merged
             
             # Return default configuration
             return self._get_default_config(table_name)

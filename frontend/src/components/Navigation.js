@@ -1,16 +1,17 @@
 import {
-    Assessment as AssessmentIcon,
-    Dashboard as DashboardIcon,
-    Settings as SettingsIcon
+  Assessment as AssessmentIcon,
+  Dashboard as DashboardIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import {
-    Box,
-    Drawer,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  useTheme
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -23,7 +24,7 @@ const menuItems = [
     path: '/dashboard',
   },
   {
-    text: 'Validation Results',
+    text: 'Validation',
     icon: <AssessmentIcon />,
     path: '/validation-results',
   },
@@ -35,6 +36,7 @@ const menuItems = [
 ];
 
 function Navigation() {
+  const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -48,6 +50,9 @@ function Navigation() {
           width: DRAWER_WIDTH,
           boxSizing: 'border-box',
           position: 'relative',
+          backgroundColor: '#1a1a2e',
+          border: 'none',
+          borderRight: '1px solid rgba(37, 99, 235, 0.2)',
         },
       }}
     >
@@ -58,9 +63,40 @@ function Navigation() {
               <ListItemButton
                 selected={location.pathname === item.path}
                 onClick={() => navigate(item.path)}
+                sx={{
+                  mx: 1,
+                  my: 0.5,
+                  borderRadius: 1.5,
+                  color: '#94a3b8',
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.main,
+                    color: '#ffffff',
+                    '& .MuiListItemIcon-root': {
+                      color: '#2563eb',
+                    },
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.dark,
+                    color: '#ffffff',
+                    '& .MuiListItemIcon-root': {
+                      color: '#2563eb',
+                    },
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                  },
+                }}
               >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+                <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
+                <ListItemText 
+                  primary={item.text}
+                  sx={{
+                    '& .MuiListItemText-primary': {
+                      fontWeight: 500,
+                      fontSize: '0.95rem',
+                    },
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           ))}

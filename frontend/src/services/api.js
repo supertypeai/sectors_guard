@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 20000,
+  timeout: 1200000,
 });
 
 // Request interceptor
@@ -37,8 +37,43 @@ export const dashboardAPI = {
 
 export const validationAPI = {
   getTables: () => api.get('/validation/tables'),
-  runValidation: (tableName) => api.post(`/validation/run/${tableName}`),
-  getResults: () => api.get('/validation/results'),
+  runValidation: (tableName, startDate = null, endDate = null) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const url = `/validation/run/${tableName}${params.toString() ? `?${params.toString()}` : ''}`;
+    return api.post(url);
+  },
+  runAllValidations: (startDate = null, endDate = null) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const url = `/validation/run-all${params.toString() ? `?${params.toString()}` : ''}`;
+    return api.post(url);
+  },
+  getResults: (tableName = null, limit = 10) => {
+    let url = '/dashboard/results';
+    const params = new URLSearchParams();
+    
+    if (tableName) params.append('table_name', tableName);
+    if (limit) params.append('limit', limit.toString());
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    return api.get(url).then(response => {
+      // Handle fallback responses
+      if (response.data.source === 'local_storage') {
+        console.warn('⚠️ Using local storage - database unavailable');
+      }
+      return response;
+    });
+  },
+  getTableConfig: (tableName) => api.get(`/validation/config/${tableName}`),
+  saveTableConfig: (tableName, payload) => api.post(`/validation/config/${tableName}`, payload),
 };
 
 export default api;

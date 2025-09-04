@@ -4,12 +4,19 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 function ValidationTrendsChart({ data, loading }) {
   if (loading) {
     return (
-      <Paper elevation={3} sx={{ p: 2, height: 400 }}>
-        <Typography variant="h6" gutterBottom>
+      <Paper 
+        sx={{ 
+          p: 3, 
+          height: 400,
+          backgroundColor: '#1a1a2e',
+          border: '1px solid rgba(37, 99, 235, 0.2)',
+        }}
+      >
+        <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
           Validation Trends
         </Typography>
         <Box display="flex" justifyContent="center" alignItems="center" height="80%">
-          <Typography>Loading...</Typography>
+          <Typography sx={{ color: '#94a3b8' }}>Loading...</Typography>
         </Box>
       </Paper>
     );
@@ -22,27 +29,43 @@ function ValidationTrendsChart({ data, loading }) {
   })) || [];
 
   return (
-    <Paper elevation={3} sx={{ p: 2, height: 400 }}>
-      <Typography variant="h6" gutterBottom>
+    <Paper 
+      sx={{ 
+        p: 3, 
+        height: 400,
+        backgroundColor: '#1a1a2e',
+        border: '1px solid rgba(37, 99, 235, 0.2)',
+      }}
+    >
+      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
         Validation Trends
       </Typography>
       <ResponsiveContainer width="100%" height="85%">
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+          <XAxis dataKey="date" stroke="#94a3b8" />
+          <YAxis stroke="#94a3b8" />
+          <Tooltip 
+            contentStyle={{
+              backgroundColor: '#1a1a2e',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              color: '#ffffff'
+            }}
+          />
           <Legend />
           <Line 
             type="monotone" 
             dataKey="validations" 
-            stroke="#8884d8" 
+            stroke="#2563eb" 
+            strokeWidth={2}
             name="Total Validations"
           />
           <Line 
             type="monotone" 
             dataKey="anomalies" 
-            stroke="#82ca9d" 
+            stroke="#ef4444" 
+            strokeWidth={2}
             name="Anomalies Detected"
           />
         </LineChart>
