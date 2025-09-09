@@ -193,7 +193,7 @@ function Dashboard() {
         </Grow>
       </Grid>
 
-      {/* Charts Section with enhanced design */}
+      {/* Charts Section */}
       <Fade in timeout={1000}>
         <Grid container spacing={4} sx={{ mb: 4 }}>
           <Grid item xs={12} md={8}>
@@ -204,12 +204,12 @@ function Dashboard() {
                 border: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
-              <CardContent sx={{ p: 4 }}>
+              {/* <CardContent sx={{ p: 4 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#ffffff' }}>
                   Validation Trends
-                </Typography>
+                </Typography> */}
                 <ValidationTrendsChart data={chartTrends} loading={trendsLoading} />
-              </CardContent>
+              {/* </CardContent> */}
             </Card>
           </Grid>
           <Grid item xs={12} md={4}>
@@ -220,18 +220,13 @@ function Dashboard() {
                 border: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
-              <CardContent sx={{ p: 4 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#ffffff' }}>
-                  Table Status
-                </Typography>
-                <TableStatusChart data={chartStatus} loading={statusLoading} />
-              </CardContent>
+              <TableStatusChart data={chartStatus} loading={statusLoading} />
             </Card>
           </Grid>
         </Grid>
       </Fade>
 
-      {/* IDX Tables Overview with beautiful design */}
+      {/* Tables Overview */}
       <Fade in timeout={1200}>
         <Card
           sx={{

@@ -1,17 +1,18 @@
 import {
-  Assessment as AssessmentIcon,
-  Dashboard as DashboardIcon,
-  Settings as SettingsIcon
+    Assessment as AssessmentIcon,
+    Dashboard as DashboardIcon,
+    Settings as SettingsIcon,
+    BarChart as VisualizationIcon
 } from '@mui/icons-material';
 import {
-  Box,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  useTheme
+    Box,
+    Drawer,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    useTheme
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -27,6 +28,11 @@ const menuItems = [
     text: 'Validation',
     icon: <AssessmentIcon />,
     path: '/validation-results',
+  },
+  {
+    text: 'Visualization',
+    icon: <VisualizationIcon />,
+    path: '/visualization',
   },
   {
     text: 'Table Configuration',

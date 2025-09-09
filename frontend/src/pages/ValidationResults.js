@@ -174,17 +174,9 @@ function ValidationResults() {
   const tablesData = tables?.data?.tables || [];
   const resultsData = results?.data?.results || results?.data?.data?.results || [];
 
-  // // Debug: log response shape when data arrives (remove later if noisy)
-  // if (results && !results._logged) {
-  //   // mark so we only log once
-  //   try { console.debug('🧾 validation-results response:', results); } catch (e) {}
-  //   // attach marker (non-reactive) to avoid repeated logs
-  //   try { results._logged = true; } catch (e) {}
-  // }
-
   return (
     <Box>
-      {/* Simple Header */}
+      {/* Header */}
       <Fade in timeout={600}>
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>

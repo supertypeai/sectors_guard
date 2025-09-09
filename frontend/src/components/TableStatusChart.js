@@ -44,7 +44,7 @@ function TableStatusChart({ data, loading }) {
       }}
     >
       <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
-        Table Status Distribution
+        Table Status
       </Typography>
       <ResponsiveContainer width="100%" height="85%">
         <PieChart>

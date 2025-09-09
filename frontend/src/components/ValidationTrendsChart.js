@@ -12,9 +12,6 @@ function ValidationTrendsChart({ data, loading }) {
           border: '1px solid rgba(37, 99, 235, 0.2)',
         }}
       >
-        <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
-          Validation Trends
-        </Typography>
         <Box display="flex" justifyContent="center" alignItems="center" height="80%">
           <Typography sx={{ color: '#94a3b8' }}>Loading...</Typography>
         </Box>

@@ -543,3 +543,93 @@ async def get_table_status():
             "error": 0
         }
         return status_data
+
+@dashboard_router.get("/table-data/{table_name}")
+async def get_table_data(
+    table_name: str,
+    symbol: Optional[str] = Query(None, description="Stock symbol to filter by"),
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    limit: Optional[int] = Query(1000, description="Maximum number of records to return")
+):
+    """Get data from a specific table with filtering options for visualization"""
+    try:
+        supabase = get_supabase_client()
+        
+        # Valid IDX tables
+        valid_tables = [
+            'idx_combine_financials_annual',
+            'idx_combine_financials_quarterly', 
+            'idx_daily_data',
+            'idx_dividend',
+            'idx_all_time_price',
+            'idx_stock_split',
+            'idx_filings'
+        ]
+        
+        if table_name not in valid_tables:
+            raise HTTPException(status_code=400, detail=f"Invalid table name. Valid tables: {valid_tables}")
+        
+        # Build query
+        query = supabase.table(table_name).select("*")
+        
+        # Apply symbol filter
+        if symbol:
+            if table_name == 'idx_filings':
+                # For filings, check if symbol is in tickers array
+                query = query.contains("tickers", [symbol])
+            else:
+                query = query.eq("symbol", symbol)
+        
+        # Apply date filters
+        if start_date:
+            if table_name == 'idx_filings':
+                query = query.gte("timestamp", start_date)
+            else:
+                query = query.gte("date", start_date)
+                
+        if end_date:
+            if table_name == 'idx_filings':
+                query = query.lte("timestamp", end_date) 
+            else:
+                query = query.lte("date", end_date)
+        
+        # Apply limit
+        if limit:
+            query = query.limit(limit)
+            
+        # Order by date (most recent first)
+        if table_name == 'idx_filings':
+            query = query.order("timestamp", desc=True)
+        else:
+            query = query.order("date", desc=True)
+        
+        response = query.execute()
+        
+        if not response.data:
+            return {
+                "table_name": table_name,
+                "data": [],
+                "count": 0,
+                "filters": {
+                    "symbol": symbol,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "limit": limit
+                }
+            }
+        
+        return {
+            "table_name": table_name,
+            "data": response.data,
+            "count": len(response.data),
+            "filters": {
+                "symbol": symbol,
+                "start_date": start_date,
+                "end_date": end_date,
+                "limit": limit
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching table data: {str(e)}")

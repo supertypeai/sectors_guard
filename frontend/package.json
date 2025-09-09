@@ -15,6 +15,7 @@
     "styled-components": "^5.3.9",
     "@mui/material": "^5.11.10",
     "@mui/icons-material": "^5.11.9",
+    "@mui/x-date-pickers": "^5.0.20",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "moment": "^2.29.4",
