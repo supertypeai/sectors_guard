@@ -1,0 +1,43 @@
+# Development files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+.tox/
+venv/
+env/
+br/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Debug files
+debug_*.py
+
+# Local data
+validation_results_local/
+*.csv
+error.txt
+
+# Documentation
+*.md
+
+# Version control
+.git/
+.gitignore
