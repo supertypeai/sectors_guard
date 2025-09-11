@@ -9,15 +9,20 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PORT=8080
 
-# System deps (only if wheels unavailable; kept minimal)
+# System deps - Add more dependencies for pandas/numpy compilation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    gcc \
+    g++ \
+    libpq-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies first (leverage layer cache)
 COPY requirements.txt ./
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -25,7 +30,5 @@ COPY . .
 # Expose port (documentation only; Fly sets up networking)
 EXPOSE 8080
 
-# Healthcheck (simple TCP check handled by Fly, optional extra endpoint)
-
-# Start the application
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8080", "--timeout", "120"]
+# Start the application with simpler command
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
