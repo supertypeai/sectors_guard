@@ -1,0 +1,314 @@
+Validation Results:
+Number of anomalies found: 36
+
+Detailed anomalies:
+
+1. identity_violation
+   Message: Assets do not equal Liabilities plus Equity
+   Severity: error
+   metric: assets=liabilities+equity
+   symbol: BMRI.JK
+   date: 2021-12-31
+   difference: 176907609000000.0
+   difference_pct: 10.251881558334503
+
+2. identity_violation
+   Message: Assets do not equal Liabilities plus Equity
+   Severity: error
+   metric: assets=liabilities+equity
+   symbol: BBRI.JK
+   date: 2020-12-31
+   difference: 33546976000000.0
+   difference_pct: 2.219002070682906
+
+3. identity_violation
+   Message: Assets do not equal Liabilities plus Equity
+   Severity: error
+   metric: assets=liabilities+equity
+   symbol: BRIS.JK
+   date: 2020-12-31
+   difference: 34796186000000.0
+   difference_pct: 60.28906299244714
+
+4. identity_violation
+   Message: Assets do not equal Liabilities plus Equity
+   Severity: error
+   metric: assets=liabilities+equity
+   symbol: BBNI.JK
+   date: 2020-12-31
+   difference: 32229563000000.0
+   difference_pct: 3.6158655629207983
+
+5. identity_violation
+   Message: Assets do not equal Liabilities plus Equity
+   Severity: error
+   metric: assets=liabilities+equity
+   symbol: BMRI.JK
+   date: 2020-12-31
+   difference: 84270554000000.0
+   difference_pct: 5.895789610012655
+
+6. identity_violation
+   Message: Net loan does not equal Gross loan minus Allowance
+   Severity: warning
+   metric: net_loan=gross_loan-allowance
+   symbol: BMRI.JK
+   date: 2021-12-31
+   difference: 137177360000000.0
+   difference_pct: 14.324580419164148
+
+7. identity_violation
+   Message: Net loan does not equal Gross loan minus Allowance
+   Severity: warning
+   metric: net_loan=gross_loan-allowance
+   symbol: BBCA.JK
+   date: 2020-12-31
+   difference: 53891884000000.0
+   difference_pct: 9.840684252522697
+
+8. identity_violation
+   Message: Net loan does not equal Gross loan minus Allowance
+   Severity: warning
+   metric: net_loan=gross_loan-allowance
+   symbol: BBRI.JK
+   date: 2020-12-31
+   difference: 130330004000000.0
+   difference_pct: 15.621606794699952
+
+9. identity_violation
+   Message: Net loan does not equal Gross loan minus Allowance
+   Severity: warning
+   metric: net_loan=gross_loan-allowance
+   symbol: BBCA.JK
+   date: 2021-12-31
+   difference: 64399454000000.0
+   difference_pct: 10.918611643084283
+
+10. identity_violation
+   Message: Net loan does not equal Gross loan minus Allowance
+   Severity: warning
+   metric: net_loan=gross_loan-allowance
+   symbol: BBNI.JK
+   date: 2020-12-31
+   difference: 88455972000000.0
+   difference_pct: 16.32092838996483
+
+11. identity_violation
+   Message: Net loan does not equal Gross loan minus Allowance
+   Severity: warning
+   metric: net_loan=gross_loan-allowance
+   symbol: BBNI.JK
+   date: 2021-12-31
+   difference: 100589772000000.0
+   difference_pct: 18.90282969631467
+
+12. identity_violation
+   Message: Net loan does not equal Gross loan minus Allowance
+   Severity: warning
+   metric: net_loan=gross_loan-allowance
+   symbol: BMRI.JK
+   date: 2020-12-31
+   difference: 124542204000000.0
+   difference_pct: 15.4160361689804
+
+13. data_missing
+   Message: Net cash_flow value missing while components present (skipped identity check)
+   Severity: info
+   metric: net_cash_flow
+   symbol: BBCA.JK
+   date: 2020-12-31
+
+14. data_missing
+   Message: Net cash_flow value missing while components present (skipped identity check)
+   Severity: info
+   metric: net_cash_flow
+   symbol: BBRI.JK
+   date: 2020-12-31
+
+15. data_missing
+   Message: Net cash_flow value missing while components present (skipped identity check)
+   Severity: info
+   metric: net_cash_flow
+   symbol: BRIS.JK
+   date: 2020-12-31
+
+16. data_missing
+   Message: Net cash_flow value missing while components present (skipped identity check)
+   Severity: info
+   metric: net_cash_flow
+   symbol: BBNI.JK
+   date: 2020-12-31
+
+17. data_missing
+   Message: Net cash_flow value missing while components present (skipped identity check)
+   Severity: info
+   metric: net_cash_flow
+   symbol: BMRI.JK
+   date: 2020-12-31
+
+18. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBNI.JK
+   date: 2022-12-31
+   difference: 123080733000000.0
+   difference_pct: 1288.1186933396768
+
+19. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BMRI.JK
+   date: 2022-12-31
+   difference: 161360099000000.0
+   difference_pct: 225.94803668835993
+
+20. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BRIS.JK
+   date: 2022-12-31
+   difference: -12679147000000.0
+   difference_pct: 100.0
+
+21. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBCA.JK
+   date: 2023-12-31
+   difference: 181432517000000.0
+   difference_pct: 493.66705757509794
+
+22. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BMRI.JK
+   date: 2023-12-31
+   difference: 292666155000000.0
+   difference_pct: 970.98101491028
+
+23. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBRI.JK
+   date: 2023-12-31
+   difference: 268889717000000.0
+   difference_pct: 543.082405596035
+
+24. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBRI.JK
+   date: 2024-12-31
+   difference: 223448790000000.0
+   difference_pct: 1671.6310149866326
+
+25. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBCA.JK
+   date: 2024-12-31
+   difference: 176832550000000.0
+   difference_pct: 459.81929515708543
+
+26. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BRIS.JK
+   date: 2023-12-31
+   difference: -799673000000.0
+   difference_pct: 100.0
+
+27. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BRIS.JK
+   date: 2024-12-31
+   difference: -21906750000000.0
+   difference_pct: 100.0
+
+28. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBNI.JK
+   date: 2023-12-31
+   difference: 125819000000000.0
+   difference_pct: 1418.3363420519663
+
+29. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBNI.JK
+   date: 2024-12-31
+   difference: 171102681000000.0
+   difference_pct: 337.01814718756265
+
+30. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBRI.JK
+   date: 2022-12-31
+   difference: 82660262000000.0
+   difference_pct: 72.32004723378272
+
+31. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BBCA.JK
+   date: 2022-12-31
+   difference: 143510152000000.0
+   difference_pct: 809.876704288939
+
+32. identity_violation
+   Message: Net cash flow does not equal the sum of CFO, CFI, and CFF
+   Severity: warning
+   metric: net_cash_flow=sum(CFO,CFI,CFF)
+   symbol: BMRI.JK
+   date: 2024-12-31
+   difference: 283782628000000.0
+   difference_pct: 7133.026981484163
+
+33. ratio_out_of_range
+   Message: LDR does not equal Gross Loan divided by Total Deposit (ldr < 0.4 or ldr > 1.3)
+   Severity: warning
+   metric: ldr
+   symbol: BRIS.JK
+   date: 2022-12-31
+   value: 3.1239695834063057
+
+34. ratio_out_of_range
+   Message: Cost to Income Ratio 453.2% is extremely high (>300%) or negative
+   Severity: warning
+   metric: cost_to_income
+   symbol: BRIS.JK
+   date: 2020-12-31
+   value: 4.532461091300023
+
+35. ratio_out_of_range
+   Message: LDR does not equal Gross Loan divided by Total Deposit (ldr < 0.4 or ldr > 1.3)
+   Severity: warning
+   metric: ldr
+   symbol: BRIS.JK
+   date: 2023-12-31
+   value: 3.508358058351091
+
+36. ratio_out_of_range
+   Message: LDR does not equal Gross Loan divided by Total Deposit (ldr < 0.4 or ldr > 1.3)
+   Severity: warning
+   metric: ldr
+   symbol: BRIS.JK
+   date: 2024-12-31
+   value: 3.6997117557080585

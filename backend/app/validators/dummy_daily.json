@@ -1,0 +1,47 @@
+[
+  {
+    "symbol": "TLKM.JK",
+    "date": "2025-07-30",
+    "close": 2880,
+    "volume": 99062400,
+    "market_cap": 290701438877696,
+    "updated_on": "2025-07-30 11:24:39+00",
+    "mcap_method": 1
+  },
+  {
+    "symbol": "TLKM.JK",
+    "date": "2025-07-31",
+    "close": 2880,
+    "volume": 201065700,
+    "market_cap": 285299141771264,
+    "updated_on": "2025-07-31 11:27:30+00",
+    "mcap_method": 1
+  },
+  {
+    "symbol": "TLKM.JK",
+    "date": "2025-08-01",
+    "close": 2980,
+    "volume": 130977000,
+    "market_cap": 300795249557504,
+    "updated_on": "2025-08-01 12:26:38+00",
+    "mcap_method": 1
+  },
+  {
+    "symbol": "TLKM.JK",
+    "date": "2025-08-04",
+    "close": 3030,
+    "volume": 96385300,
+    "market_cap": 305842138120192,
+    "updated_on": "2025-08-04 11:24:52+00",
+    "mcap_method": 1
+  },
+  {
+    "symbol": "TLKM.JK",
+    "date": "2025-08-05",
+    "close": 3030,
+    "volume": 99396900,
+    "market_cap": 305842138120192,
+    "updated_on": "2025-08-05 12:26:42+00",
+    "mcap_method": 1
+  }
+]
