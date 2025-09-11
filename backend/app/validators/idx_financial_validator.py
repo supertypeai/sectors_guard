@@ -72,8 +72,6 @@ class IDXFinancialValidator(DataValidator):
             
             if results["anomalies_count"] > 0:
                 results["status"] = "error"
-            elif len(all_anomalies) > 0:
-                results["status"] = "warning"  # Has warnings/info but no errors
             
             # Store results (only errors)
             await self._store_validation_results(results)
@@ -106,57 +104,62 @@ class IDXFinancialValidator(DataValidator):
                 default_end = today.isoformat()
                 start_date = default_start
                 end_date = default_end
-                print(f"ℹ️  [Validator] No date filter provided for daily table - defaulting to last 7 days: {start_date} to {end_date}")
             # Quarterly financials: default to last 1 year
             elif table_name == 'idx_combine_financials_quarterly' and not start_date and not end_date:
                 default_start = (today - timedelta(days=365)).isoformat()  # approx 1 year
                 default_end = today.isoformat()
                 start_date = default_start
                 end_date = default_end
-                print(f"ℹ️  [Validator] No date filter provided for quarterly table - defaulting to last 1 year: {start_date} to {end_date}")
 
             query = self.supabase.table(table_name).select("*")
             
             # Apply date filters if provided
             if start_date:
-                print(f"🔍 [Validator] Applying start date filter: >= {start_date}")
                 query = query.gte("date", start_date)
             if end_date:
-                print(f"🔍 [Validator] Applying end date filter: <= {end_date}")
                 query = query.lte("date", end_date)
                 
             response = query.execute()
-            raw_count = len(response.data) if getattr(response, 'data', None) else 0
-            print(f"🔬 [Validator] Raw response length: {raw_count}")
             df = pd.DataFrame(response.data) if getattr(response, 'data', None) else pd.DataFrame()
-
-            print(f"📈 [Validator] DataFrame shape: {df.shape}")
-            try:
-                dup_count = int(df.duplicated().sum())
-            except Exception:
-                dup_count = None
-            print(f"� [Validator] Duplicated rows (any columns): {dup_count}")
-            # print some sample rows for inspection
-            try:
-                print("📋 [Validator] Sample rows:", df.head(3).to_dict(orient='records'))
-            except Exception:
-                pass
-            print(f"�📈 [Validator] Fetched {len(df)} rows from {table_name}")
             
-            if not df.empty and 'date' in df.columns:
-                df['date'] = pd.to_datetime(df['date'])
-                date_range = f"{df['date'].min().strftime('%Y-%m-%d')} to {df['date'].max().strftime('%Y-%m-%d')}"
-                print(f"📅 [Validator] Data date range: {date_range}")
+            # Normalize common date aliases if present (so downstream validators can assume 'date')
+            alias_date_cols = ['date', 'ex_date', 'exDate', 'ex date']
+            for c in alias_date_cols:
+                if c in df.columns and 'date' not in df.columns:
+                    df['date'] = df[c]
+                    break
+
+            # If user requested date filtering but server-side filter returned no date column
+            # (some pipelines use different column names for date), fallback to client-side filtering
+            if (start_date or end_date) and ('date' not in df.columns):
+                # Re-fetch without server-side date filters and filter locally
                 try:
-                    unique_dates = int(df['date'].nunique())
-                    print(f"🔢 [Validator] Unique dates in fetched data: {unique_dates}")
-                except Exception:
+                    full_resp = self.supabase.table(table_name).select("*").execute()
+                    full_df = pd.DataFrame(full_resp.data) if getattr(full_resp, 'data', None) else pd.DataFrame()
+                    # Normalize aliases in the full dataset
+                    for c in alias_date_cols:
+                        if c in full_df.columns and 'date' not in full_df.columns:
+                            full_df['date'] = full_df[c]
+                            break
+                    if not full_df.empty and 'date' in full_df.columns:
+                        full_df['date'] = pd.to_datetime(full_df['date'], errors='coerce')
+                        try:
+                            if start_date:
+                                full_df = full_df[full_df['date'] >= pd.to_datetime(start_date)]
+                            if end_date:
+                                full_df = full_df[full_df['date'] <= pd.to_datetime(end_date)]
+                        except Exception:
+                            pass
+                        df = full_df
+                except Exception as e:
                     pass
+
+            if not df.empty and 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'], errors='coerce')
             
             # Return DataFrame and the applied start/end so caller can reflect actual filter used
             return df, start_date, end_date
         except Exception as e:
-            print(f"❌ [Validator] Error fetching data from {table_name}: {str(e)}")
             # Return empty DataFrame if table doesn't exist or error occurs
             return pd.DataFrame(), start_date, end_date
     
@@ -351,7 +354,7 @@ class IDXFinancialValidator(DataValidator):
                     "date": r.get('date').strftime('%Y-%m-%d') if isinstance(r.get('date'), (pd.Timestamp, datetime)) else r.get('date'),
                     "severity": "info"
                 })
-        print(f"Found {len(anomalies)} identity anomalies in {x['symbol'].iloc[0] if not x.empty else 'unknown'}")
+        print(f"Found {len(anomalies)} identity anomalies")
         return anomalies
 
     def _add_ratio_anomalies(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -684,7 +687,6 @@ class IDXFinancialValidator(DataValidator):
             # Filter only last 7 days
             today = pd.Timestamp(datetime.now(tz=None).date())
             seven_days_ago = today - pd.Timedelta(days=7)
-            print(f"🔍 [Validator] Validating daily data from {seven_days_ago.strftime('%Y-%m-%d')} to {today.strftime('%Y-%m-%d')}")
             data = data[(data['date'] >= seven_days_ago)]
 
             for symbol in data['symbol'].unique():
@@ -707,10 +709,6 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"Symbol {symbol} on {row['date'].strftime('%Y-%m-%d')}: Close price changed by {row['price_pct_change']:.1f}% (close: {row['close']})",
                             "severity": "warning"
                         })
-                    
-            if len(anomalies) > 1:
-                for anomaly in anomalies:
-                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -728,6 +726,8 @@ class IDXFinancialValidator(DataValidator):
         """
         anomalies = []
         try:
+            # Work on a copy and normalize common alias column names that appear in different pipelines
+            data = data.copy()
             required_cols = ['symbol', 'yield', 'date']
             missing_cols = [col for col in required_cols if col not in data.columns]
             if missing_cols:
@@ -739,8 +739,17 @@ class IDXFinancialValidator(DataValidator):
                 })
                 return {"anomalies": anomalies}
 
-            data = data.copy()
-            data['date'] = pd.to_datetime(data['date'])
+            # Parse dates with coercion so bad values become NaT (we will report these later)
+            try:
+                data['date'] = pd.to_datetime(data['date'], errors='coerce')
+            except KeyError:
+                anomalies.append({
+                    "type": "missing_required_columns",
+                    "columns": ['date'],
+                    "message": "Missing required column: date",
+                    "severity": "error"
+                })
+                return {"anomalies": anomalies}
             # data = data[~data['yield'].isna()]
             data['year'] = data['date'].dt.year
 
@@ -761,13 +770,26 @@ class IDXFinancialValidator(DataValidator):
                 # Calculate average yield for this year
                 avg_close_this_year = None
                 if daily_data is not None:
-                    # print(daily_data)
-                    daily_data['date'] = pd.to_datetime(daily_data['date'])
-                    daily_this_symbol = daily_data[(daily_data['symbol'] == symbol) & (daily_data['date'].dt.year == this_year)]
-                    # print(f"Daily data for {symbol} this year: {daily_this_symbol.shape[0]} rows")
-                    if not daily_this_symbol.empty:
-                        avg_close_this_year = daily_this_symbol['close'].mean()
-                    # print(f"Average close price for {symbol} this year: {avg_close_this_year}")
+                    
+                    # Normalize date column in daily_data too (may have different column names)
+                    if 'date' not in daily_data.columns:
+                        # Try common daily data date aliases
+                        date_aliases = ['trading_date', 'trade_date', 'date_trading', 'timestamp']
+                        for alias in date_aliases:
+                            if alias in daily_data.columns:
+                                daily_data['date'] = daily_data[alias]
+                                break
+                    
+                    if 'date' in daily_data.columns:
+                        daily_data['date'] = pd.to_datetime(daily_data['date'], errors='coerce')
+                        daily_this_symbol = daily_data[(daily_data['symbol'] == symbol) & (daily_data['date'].dt.year == this_year)]
+                        
+                        if not daily_this_symbol.empty:
+                            avg_close_this_year = daily_this_symbol['close'].mean()
+                        # print(f"Average close price for {symbol} this year: {avg_close_this_year}")
+                    else:
+                        # If daily_data has no recognizable date column, skip this year calculation
+                        pass
 
                 div_this_year = yearly_div.get(this_year)
                 yield_this_year = None
@@ -789,9 +811,9 @@ class IDXFinancialValidator(DataValidator):
                             "severity": "warning"
                         })
                 yearly_yield_sorted = yearly_yield.sort_index()
-                # print(yearly_yield_sorted)
+                
                 yearly_yield_change = yearly_yield_sorted.diff().abs()
-                # print(yearly_yield_change)
+                
                 large_changes = yearly_yield_change[yearly_yield_change >= 0.1]
                 if not large_changes.empty:
                     for year, change in large_changes.items():
@@ -803,10 +825,6 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"symbol {symbol} year {year}: Yield change {change*100:.2f}% >= 20%",
                             "severity": "warning"
                         })
-                    
-            if len(anomalies) > 1:
-                for anomaly in anomalies:
-                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -889,10 +907,6 @@ class IDXFinancialValidator(DataValidator):
                         "message": f"symbol {symbol}: Price data inconsistencies detected - {'; '.join(issues)}",
                         "severity": "error"
                     })
-                    
-            if len(anomalies) > 1:
-                for anomaly in anomalies:
-                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -972,11 +986,6 @@ class IDXFinancialValidator(DataValidator):
                             })
                 except (ValueError, TypeError):
                     continue
-                
-                    
-            if len(anomalies) > 1:
-                for anomaly in anomalies:
-                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",
@@ -1036,10 +1045,6 @@ class IDXFinancialValidator(DataValidator):
                             "message": f"Symbol {symbol}: Two stock splits within {days_diff} days ({current_split['date'].strftime('%Y-%m-%d')} and {next_split['date'].strftime('%Y-%m-%d')})",
                             "severity": "warning"
                         })
-                        
-            if len(anomalies) > 1:
-                for anomaly in anomalies:
-                    print(anomaly['message'])
         except Exception as e:
             anomalies.append({
                 "type": "validation_error",

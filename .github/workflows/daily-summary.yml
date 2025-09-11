@@ -165,7 +165,7 @@ jobs:
 
     - name: Upload summary artifact
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: daily-summary-${{ github.run_id }}
         path: backend/daily_summary_artifact.json
