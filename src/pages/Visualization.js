@@ -86,6 +86,10 @@ const Visualization = () => {
 
   const currentTable = tables[activeTab];
 
+  // Base API URL from env with fallback to localhost for local dev.
+  const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  const API_BASE = `${API_HOST.replace(/\/+$/, '')}/api`;
+
   // Load available symbols on component mount
   useEffect(() => {
     loadAvailableSymbols();
@@ -94,7 +98,7 @@ const Visualization = () => {
   const loadAvailableSymbols = async () => {
     try {
       // Get unique symbols from daily data as it has the most comprehensive symbol list
-      const response = await axios.get('http://localhost:8000/api/dashboard/table-data/idx_daily_data', {
+  const response = await axios.get(`${API_BASE}/dashboard/table-data/idx_daily_data`, {
         params: {
           start_date: moment().subtract(7, 'days').format('YYYY-MM-DD'),
           end_date: moment().format('YYYY-MM-DD'),
@@ -136,7 +140,7 @@ const Visualization = () => {
         limit: 1000
       };
 
-      const response = await axios.get(`http://localhost:8000/api/dashboard/table-data/${currentTable.id}`, {
+  const response = await axios.get(`${API_BASE}/dashboard/table-data/${currentTable.id}`, {
         params
       });
 
