@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import moment from 'moment';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 // Chart components for each table
 import AllTimePriceChart from '../components/charts/AllTimePriceChart';
@@ -91,14 +91,10 @@ const Visualization = () => {
   const API_BASE = `${API_HOST.replace(/\/+$/, '')}/api`;
 
   // Load available symbols on component mount
-  useEffect(() => {
-    loadAvailableSymbols();
-  }, []);
-
-  const loadAvailableSymbols = async () => {
+  const loadAvailableSymbols = useCallback(async () => {
     try {
       // Get unique symbols from daily data as it has the most comprehensive symbol list
-  const response = await axios.get(`${API_BASE}/dashboard/table-data/idx_daily_data`, {
+      const response = await axios.get(`${API_BASE}/dashboard/table-data/idx_daily_data`, {
         params: {
           start_date: moment().subtract(7, 'days').format('YYYY-MM-DD'),
           end_date: moment().format('YYYY-MM-DD'),
@@ -121,9 +117,13 @@ const Visualization = () => {
         setSelectedSymbol('BBCA.JK');
       }
     }
-  };
+  }, [selectedSymbol, API_BASE]);
 
-  const loadData = async () => {
+  useEffect(() => {
+    loadAvailableSymbols();
+  }, [loadAvailableSymbols]);
+
+  const loadData = useCallback(async () => {
     if (!selectedSymbol) {
       setError('Please select a symbol');
       return;
@@ -157,14 +157,14 @@ const Visualization = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSymbol, startDate, endDate, currentTable.id, API_BASE]);
 
   // Auto-load data when parameters change
   useEffect(() => {
     if (selectedSymbol) {
       loadData();
     }
-  }, [activeTab, selectedSymbol]);
+  }, [activeTab, selectedSymbol, loadData]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);

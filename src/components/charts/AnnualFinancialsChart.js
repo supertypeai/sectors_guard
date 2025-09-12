@@ -68,7 +68,7 @@ const AnnualFinancialsChart = ({ data, symbol }) => {
   // Custom tooltip
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
+      const payloadData = payload[0].payload;
       return (
         <div style={{
           backgroundColor: '#1a1a2e',
@@ -78,9 +78,9 @@ const AnnualFinancialsChart = ({ data, symbol }) => {
         }}>
           <p style={{ color: '#fff', margin: '0 0 5px 0' }}>{`Year: ${label}`}</p>
           {payload.map((entry, index) => {
-            let value = entry.value;
+      let value = entry.value;
             let suffix = '';
-            if (entry.dataKey.includes('_t')) {
+      if (entry.dataKey.includes('_t')) {
               suffix = 'T';
             } else if (['roe', 'roa', 'equity_ratio', 'ldr', 'revenue_growth', 'earnings_growth', 'assets_growth'].includes(entry.dataKey)) {
               suffix = '%';
@@ -88,7 +88,7 @@ const AnnualFinancialsChart = ({ data, symbol }) => {
             }
             return (
               <p key={index} style={{ color: entry.color, margin: '2px 0' }}>
-                {`${entry.name}: ${value.toLocaleString()}${suffix}`}
+        {`${entry.name}: ${value.toLocaleString()}${suffix}`}
               </p>
             );
           })}

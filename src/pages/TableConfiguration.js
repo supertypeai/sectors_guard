@@ -25,7 +25,6 @@ function TableConfiguration() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [tables, setTables] = useState([]);
   const [loadingTables, setLoadingTables] = useState(false);
-  const [loadingConfig, setLoadingConfig] = useState(false);
   const [metrics, setMetrics] = useState([]);
   const [rulesJson, setRulesJson] = useState('');
   const [rulesObj, setRulesObj] = useState({});
@@ -52,7 +51,7 @@ function TableConfiguration() {
 
   useEffect(() => {
     if (!selectedTable) return;
-    setLoadingConfig(true);
+  // setLoadingConfig(true);
     validationAPI.getTableConfig(selectedTable)
       .then(res => {
         const cfg = res.data || res; // backend returns object directly
@@ -84,7 +83,7 @@ function TableConfiguration() {
         setEmailRecipients('');
         setErrorThreshold(5);
       })
-      .finally(() => setLoadingConfig(false));
+  .finally(() => {});
   }, [selectedTable]);
 
   // keep rulesObj and rulesJson in sync when rulesJson is edited manually

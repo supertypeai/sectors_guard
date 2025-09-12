@@ -1,8 +1,6 @@
-import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
+import { Box, Card, CardContent, Typography } from '@mui/material';
 
 function StatCard({ title, value, subtitle, icon }) {
-  const theme = useTheme();
-  
   return (
     <Card 
       elevation={0}
