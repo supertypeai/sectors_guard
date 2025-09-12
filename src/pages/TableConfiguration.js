@@ -51,7 +51,6 @@ function TableConfiguration() {
 
   useEffect(() => {
     if (!selectedTable) return;
-  // setLoadingConfig(true);
     validationAPI.getTableConfig(selectedTable)
       .then(res => {
         const cfg = res.data || res; // backend returns object directly
@@ -82,8 +81,7 @@ function TableConfiguration() {
         setRulesJson('{}');
         setEmailRecipients('');
         setErrorThreshold(5);
-      })
-  .finally(() => {});
+      });
   }, [selectedTable]);
 
   // keep rulesObj and rulesJson in sync when rulesJson is edited manually

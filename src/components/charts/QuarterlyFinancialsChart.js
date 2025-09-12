@@ -50,7 +50,6 @@ const QuarterlyFinancialsChart = ({ data, symbol }) => {
   // Custom tooltip
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const payloadData = payload[0].payload;
       return (
         <div style={{
           backgroundColor: '#1a1a2e',

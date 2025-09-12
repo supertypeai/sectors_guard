@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Typography } from '@mui/material';
 
 function StatCard({ title, value, subtitle, icon }) {
+  
   return (
     <Card 
       elevation={0}
