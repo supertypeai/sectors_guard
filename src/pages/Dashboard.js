@@ -135,7 +135,7 @@ function Dashboard() {
               color: '#ffffff',
             }}
           >
-            IDX Data Validation Dashboard
+            Sectors Guard Dashboard
           </Typography>
           <Typography 
             variant="subtitle1" 

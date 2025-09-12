@@ -1,4 +1,4 @@
-# IDX Data Validation Dashboard
+# Sectors Guard
 
 A comprehensive data validation dashboard with automated anomaly detection and email notifications. This application monitors data quality across multiple tables in Supabase and provides real-time insights through an interactive dashboard.
 
