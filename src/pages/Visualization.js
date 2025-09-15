@@ -87,7 +87,7 @@ const Visualization = () => {
   const currentTable = tables[activeTab];
 
   // Base API URL from env with fallback to localhost for local dev.
-  const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000' || 'http://localhost:8080';
   const API_BASE = `${API_HOST.replace(/\/+$/, '')}/api`;
 
   const loadAvailableSymbols = useCallback(async () => {
