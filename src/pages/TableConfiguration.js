@@ -130,9 +130,8 @@ function TableConfiguration() {
         setErrorThreshold(threshold);
         
         // Auto advance to next step if this is first time selecting table
-        if (activeStep === 0) {
-          setActiveStep(1);
-        }
+        // Use functional state updater to avoid referencing `activeStep` from closure
+        setActiveStep(prev => (prev === 0 ? 1 : prev));
       })
       .catch(err => {
         console.error('Failed to load table config', err);
