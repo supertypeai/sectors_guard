@@ -81,8 +81,9 @@ export default function Workflows() {
   const githubActions = githubActionsData?.data || {};
 
   const metrics = useMemo(() => {
-    const total = rows.length;
-    const byStatus = rows.reduce((acc, r) => {
+    const currentRows = data?.data?.data || [];
+    const total = currentRows.length;
+    const byStatus = currentRows.reduce((acc, r) => {
       const s = r['Last Run Status'] || 'Unknown';
       acc[s] = (acc[s] || 0) + 1;
       return acc;
