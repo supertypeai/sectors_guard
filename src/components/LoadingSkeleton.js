@@ -5,7 +5,7 @@ function LoadingSkeleton({ type = 'card', count = 1 }) {
     return (
       <>
         {Array.from({ length: count }).map((_, index) => (
-          <Card key={index} sx={{ borderRadius: 2, height: '100%', backgroundColor: '#1a1a2e', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <Card key={index} sx={(theme) => ({ borderRadius: 2, height: '100%', backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}` })}>
             <CardContent sx={{ p: 3 }}>
               <Box display="flex" justifyContent="space-between" alignItems="flex-start">
                 <Box sx={{ flex: 1 }}>
@@ -24,7 +24,7 @@ function LoadingSkeleton({ type = 'card', count = 1 }) {
 
   if (type === 'chart') {
     return (
-      <Card sx={{ borderRadius: 2, height: '100%', backgroundColor: '#1a1a2e', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+      <Card sx={(theme) => ({ borderRadius: 2, height: '100%', backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}` })}>
         <CardContent sx={{ p: 4 }}>
           <Skeleton variant="text" width="40%" height={24} sx={{ mb: 2 }} />
           <Skeleton variant="rectangular" width="100%" height={300} sx={{ borderRadius: 2 }} />
@@ -35,7 +35,7 @@ function LoadingSkeleton({ type = 'card', count = 1 }) {
 
   if (type === 'table') {
     return (
-      <Card sx={{ borderRadius: 4 }}>
+      <Card sx={(theme) => ({ borderRadius: 4, backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}` })}>
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Skeleton variant="rectangular" width={40} height={40} sx={{ borderRadius: 2 }} />
@@ -55,7 +55,7 @@ function LoadingSkeleton({ type = 'card', count = 1 }) {
 
   // Default card skeleton
   return (
-    <Card sx={{ borderRadius: 4 }}>
+    <Card sx={(theme) => ({ borderRadius: 4, backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}` })}>
       <CardContent sx={{ p: 3 }}>
         <Skeleton variant="text" width="60%" height={24} sx={{ mb: 2 }} />
         <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2, mb: 2 }} />

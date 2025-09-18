@@ -132,17 +132,14 @@ function Dashboard() {
             sx={{ 
               fontWeight: 600, 
               mb: 1,
-              color: '#ffffff',
+              color: 'text.primary',
             }}
           >
             Sectors Guard Dashboard
           </Typography>
           <Typography 
             variant="subtitle1" 
-            sx={{ 
-              color: '#94a3b8',
-              mb: 3,
-            }}
+            sx={{ color: 'text.secondary', mb: 3 }}
           >
             Real-time monitoring and anomaly detection for Indonesian Stock Exchange
           </Typography>
@@ -197,13 +194,7 @@ function Dashboard() {
       <Fade in timeout={1000}>
         <Grid container spacing={4} sx={{ mb: 4 }}>
           <Grid item xs={12} md={8}>
-            <Card
-              sx={{
-                borderRadius: 2,
-                backgroundColor: '#1a1a2e',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-              }}
-            >
+            <Card>
               {/* <CardContent sx={{ p: 4 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#ffffff' }}>
                   Validation Trends
@@ -213,13 +204,7 @@ function Dashboard() {
             </Card>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Card
-              sx={{
-                borderRadius: 2,
-                backgroundColor: '#1a1a2e',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-              }}
-            >
+            <Card>
               <TableStatusChart data={chartStatus} loading={statusLoading} />
             </Card>
           </Grid>
@@ -228,14 +213,7 @@ function Dashboard() {
 
       {/* Tables Overview */}
       <Fade in timeout={1200}>
-        <Card
-          sx={{
-            borderRadius: 2,
-            backgroundColor: '#1a1a2e',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            mb: 4,
-          }}
-        >
+        <Card sx={{ borderRadius: 2, mb: 4 }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
               <Box
@@ -253,10 +231,10 @@ function Dashboard() {
                 <TableChart />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#ffffff' }}>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
                   IDX Financial Tables Overview
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Specialized validation for Indonesian Stock Exchange financial data
                 </Typography>
               </Box>
@@ -303,15 +281,7 @@ function Dashboard() {
                             {table.icon}
                           </Box>
                           <Box sx={{ flex: 1 }}>
-                            <Typography 
-                              variant="subtitle1" 
-                              sx={{ 
-                                fontWeight: 600, 
-                                color: '#f1f5f9',
-                                mb: 0.5,
-                                fontSize: '0.95rem',
-                              }}
-                            >
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, fontSize: '0.95rem' }}>
                               {table.name.replace('idx_', '').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </Typography>
                             <Chip
@@ -327,14 +297,7 @@ function Dashboard() {
                           </Box>
                         </Box>
                         
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            color: '#94a3b8', 
-                            mb: 2,
-                            lineHeight: 1.5,
-                          }}
-                        >
+                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, lineHeight: 1.5 }}>
                           {table.description}
                         </Typography>
                         
@@ -356,13 +319,7 @@ function Dashboard() {
                           >
                             Validation Rule:
                           </Typography>
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: '#cbd5e1',
-                              fontWeight: 400,
-                            }}
-                          >
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 400 }}>
                             {table.validationRule}
                           </Typography>
                         </Box>

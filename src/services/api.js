@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000' || 'http://localhost:8080';
 const API_BASE_URL = `${API_HOST.replace(/\/+$/, '')}/api`;
+const API_TOKEN = process.env.REACT_APP_API_TOKEN;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -12,6 +13,12 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Add any auth headers here if needed
+    if (API_TOKEN) {
+      config.headers = {
+        ...(config.headers || {}),
+        Authorization: `Bearer ${API_TOKEN}`,
+      };
+    }
     return config;
   },
   (error) => {
@@ -21,9 +28,7 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
@@ -75,6 +80,11 @@ export const validationAPI = {
   },
   getTableConfig: (tableName) => api.get(`/validation/config/${tableName}`),
   saveTableConfig: (tableName, payload) => api.post(`/validation/config/${tableName}`, payload),
+};
+
+// Sheet monitoring API
+export const sheetAPI = {
+  getSheetJson: () => api.get('/sheet', { params: { format: 'json' } }),
 };
 
 export default api;

@@ -1,28 +1,30 @@
-import { Box, Paper, Typography } from '@mui/material';
+import { alpha, Box, Paper, Typography, useTheme } from '@mui/material';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
-const COLORS = {
-  healthy: '#10b981', // Green for healthy
-  warning: '#f59e0b', // Orange for warning
-  error: '#ef4444',   // Red for error
-};
+const mapColors = (theme) => ({
+  healthy: theme.palette.success.main,
+  warning: theme.palette.warning.main,
+  error: theme.palette.error.main,
+});
 
 function TableStatusChart({ data, loading }) {
+  const theme = useTheme();
+  const COLORS = mapColors(theme);
   if (loading) {
     return (
       <Paper 
-        sx={{ 
+        sx={(theme) => ({ 
           p: 3, 
           height: 400,
-          backgroundColor: '#1a1a2e',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+        })}
       >
-        <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
-          Table Status Distribution
+        <Typography variant="h6" gutterBottom sx={{ color: (theme) => theme.palette.text.primary, fontWeight: 600 }}>
+          Table Status
         </Typography>
         <Box display="flex" justifyContent="center" alignItems="center" height="80%">
-          <Typography sx={{ color: '#94a3b8' }}>Loading...</Typography>
+          <Typography sx={{ color: (theme) => theme.palette.text.secondary }}>Loading...</Typography>
         </Box>
       </Paper>
     );
@@ -31,19 +33,19 @@ function TableStatusChart({ data, loading }) {
   const chartData = Object.entries(data || {}).map(([status, count]) => ({
     name: status.charAt(0).toUpperCase() + status.slice(1),
     value: count,
-    color: COLORS[status] || '#999',
+    color: COLORS[status] || theme.palette.text.secondary,
   }));
 
   return (
     <Paper 
-      sx={{ 
+      sx={(theme) => ({ 
         p: 3, 
         height: 400,
-        backgroundColor: '#1a1a2e',
-        border: '1px solid rgba(37, 99, 235, 0.2)',
-      }}
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+      })}
     >
-      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
+      <Typography variant="h6" gutterBottom sx={{ color: (theme) => theme.palette.text.primary, fontWeight: 600 }}>
         Table Status
       </Typography>
       <ResponsiveContainer width="100%" height="85%">
@@ -53,17 +55,29 @@ function TableStatusChart({ data, loading }) {
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            // label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
             outerRadius={80}
-            fill="#8884d8"
+            fill={theme.palette.primary.main}
             dataKey="value"
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip />
-          <Legend />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              borderRadius: 8,
+              color: theme.palette.text.primary,
+            }}
+            itemStyle={{ color: theme.palette.text.primary }}
+            labelStyle={{ color: theme.palette.text.secondary }}
+          />
+          <Legend
+            wrapperStyle={{ color: theme.palette.text.secondary }}
+            iconType="circle"
+          />
         </PieChart>
       </ResponsiveContainer>
     </Paper>

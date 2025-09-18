@@ -1,19 +1,22 @@
+import { ShowChart } from '@mui/icons-material';
 import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
   CircularProgress,
-  Container,
   FormControl,
   Grid,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Tab,
   Tabs,
   TextField,
-  Typography
+  Typography,
+  alpha,
+  useTheme
 } from '@mui/material';
 import axios from 'axios';
 import moment from 'moment';
@@ -29,6 +32,7 @@ import QuarterlyFinancialsChart from '../components/charts/QuarterlyFinancialsCh
 import StockSplitChart from '../components/charts/StockSplitChart';
 
 const Visualization = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedSymbol, setSelectedSymbol] = useState('');
   const [startDate, setStartDate] = useState(moment().subtract(30, 'days').format('YYYY-MM-DD'));
@@ -173,18 +177,42 @@ const Visualization = () => {
   const ChartComponent = currentTable.component;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ color: 'primary.main' }}>
-        IDX Data Visualization
-      </Typography>
-      
-      <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
-        Interactive charts for Indonesian Stock Exchange data tables
-      </Typography>
+    <Box>
+      {/* Page Header */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              backgroundColor: theme.palette.primary.main,
+              color: 'white',
+            }}
+          >
+            <ShowChart />
+          </Box>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              IDX Data Visualization
+            </Typography>
+            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+              Interactive charts for Indonesian Stock Exchange data tables
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Controls */}
-      <Paper sx={{ p: 3, mb: 4, bgcolor: 'background.paper' }}>
-        <Grid container spacing={3} alignItems="center">
+      <Card sx={{ borderRadius: 2, mb: 4 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>Parameters</Typography>
+          </Box>
+          <Grid container spacing={3} alignItems="center">
           <Grid item xs={12} md={3}>
             <FormControl fullWidth>
               <InputLabel>Stock Symbol</InputLabel>
@@ -234,37 +262,42 @@ const Visualization = () => {
               {loading ? <CircularProgress size={24} /> : 'Load Data'}
             </Button>
           </Grid>
-        </Grid>
-      </Paper>
+          </Grid>
+        </CardContent>
+      </Card>
 
       {/* Table Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          {tables.map((table, index) => (
-            <Tab
-              key={table.id}
-              label={table.name}
-              id={`tab-${index}`}
-              aria-controls={`tabpanel-${index}`}
-            />
-          ))}
-        </Tabs>
-      </Paper>
+      <Card sx={{ borderRadius: 2, mb: 3 }}>
+        <CardContent sx={{ p: 0 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+          >
+            {tables.map((table, index) => (
+              <Tab
+                key={table.id}
+                label={table.name}
+                id={`tab-${index}`}
+                aria-controls={`tabpanel-${index}`}
+              />
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Table Info */}
-      <Paper sx={{ p: 2, mb: 3, bgcolor: 'info.dark', color: 'info.contrastText' }}>
-        <Typography variant="h6">{currentTable.name}</Typography>
-        <Typography variant="body2">{currentTable.description}</Typography>
-        <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-          Table: {currentTable.id}
-        </Typography>
-      </Paper>
+      <Card sx={{ borderRadius: 2, mb: 3, background: (theme) => alpha(theme.palette.primary.main, 0.06), border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>
+        <CardContent sx={{ p: 2 }}>
+          <Typography variant={"h6"} sx={{ color: 'text.primary' }}>{currentTable.name}</Typography>
+          <Typography variant={"body2"} sx={{ color: 'text.secondary' }}>{currentTable.description}</Typography>
+          <Typography variant={"caption"} sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
+            Table: {currentTable.id}
+          </Typography>
+        </CardContent>
+      </Card>
 
       {/* Error Alert */}
       {error && (
@@ -274,31 +307,35 @@ const Visualization = () => {
       )}
 
       {/* Chart */}
-      <Paper sx={{ p: 3, minHeight: 500 }}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height={400}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <ChartComponent 
-            data={data} 
-            symbol={selectedSymbol}
-            startDate={startDate}
-            endDate={endDate}
-          />
-        )}
-      </Paper>
+      <Card sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ p: 3, minHeight: 500 }}>
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" height={400}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <ChartComponent 
+              data={data} 
+              symbol={selectedSymbol}
+              startDate={startDate}
+              endDate={endDate}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Data Summary */}
       {!loading && data.length > 0 && (
-        <Paper sx={{ p: 3, mt: 3, bgcolor: 'success.dark', color: 'success.contrastText' }}>
-          <Typography variant="h6">Data Summary</Typography>
-          <Typography variant="body2">
-            Loaded {data.length} records for {selectedSymbol} from {startDate} to {endDate}
-          </Typography>
-        </Paper>
+        <Card sx={{ borderRadius: 2, mt: 3, background: (theme) => alpha(theme.palette.success.main, 0.06), border: (theme) => `1px solid ${alpha(theme.palette.success.main, 0.2)}` }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant={"h6"} sx={{ color: 'success.main' }}>Data Summary</Typography>
+            <Typography variant={"body2"} sx={{ color: 'text.secondary' }}>
+              Loaded {data.length} records for {selectedSymbol} from {startDate} to {endDate}
+            </Typography>
+          </CardContent>
+        </Card>
       )}
-    </Container>
+    </Box>
   );
 };
 

@@ -2,6 +2,7 @@ import {
     Assessment as AssessmentIcon,
     Dashboard as DashboardIcon,
     Settings as SettingsIcon,
+    Timeline as TimelineIcon,
     BarChart as VisualizationIcon
 } from '@mui/icons-material';
 import {
@@ -35,6 +36,11 @@ const menuItems = [
     path: '/visualization',
   },
   {
+    text: 'Workflows',
+    icon: <TimelineIcon />,
+    path: '/workflows',
+  },
+  {
     text: 'Table Configuration',
     icon: <SettingsIcon />,
     path: '/table-configuration',
@@ -56,9 +62,9 @@ function Navigation() {
           width: DRAWER_WIDTH,
           boxSizing: 'border-box',
           position: 'relative',
-          backgroundColor: '#1a1a2e',
+          backgroundColor: (theme) => theme.palette.background.paper,
           border: 'none',
-          borderRight: '1px solid rgba(37, 99, 235, 0.2)',
+          borderRight: (theme) => `1px solid ${theme.palette.divider}`,
         },
       }}
     >
@@ -73,22 +79,22 @@ function Navigation() {
                   mx: 1,
                   my: 0.5,
                   borderRadius: 1.5,
-                  color: '#94a3b8',
+                  color: (theme) => theme.palette.text.secondary,
                   '&:hover': {
-                    backgroundColor: theme.palette.primary.main,
-                    color: '#ffffff',
+                    backgroundColor: (theme) => theme.palette.action.hover,
+                    color: (theme) => theme.palette.text.primary,
                     '& .MuiListItemIcon-root': {
-                      color: '#2563eb',
+                      color: (theme) => theme.palette.primary.main,
                     },
                   },
                   '&.Mui-selected': {
-                    backgroundColor: theme.palette.primary.dark,
-                    color: '#ffffff',
+                    backgroundColor: (theme) => theme.palette.action.selected,
+                    color: (theme) => theme.palette.text.primary,
                     '& .MuiListItemIcon-root': {
-                      color: '#2563eb',
+                      color: (theme) => theme.palette.primary.main,
                     },
                     '&:hover': {
-                      backgroundColor: theme.palette.primary.dark,
+                      backgroundColor: (theme) => theme.palette.action.selected,
                     },
                   },
                 }}
