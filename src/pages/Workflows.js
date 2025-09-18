@@ -6,6 +6,7 @@ import {
   Chip,
   CircularProgress,
   Grid,
+  Link,
   Paper,
   Table,
   TableBody,
@@ -19,14 +20,20 @@ import { useTheme } from '@mui/material/styles';
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { sheetAPI } from '../services/api';
+import { dashboardAPI, sheetAPI } from '../services/api';
 
 const STATUS_COLORS = {
   Success: (theme) => theme.palette.success.main,
+  success: (theme) => theme.palette.success.main,
   Failure: (theme) => theme.palette.error.main,
+  failure: (theme) => theme.palette.error.main,
   Running: (theme) => theme.palette.primary.light,
+  in_progress: (theme) => theme.palette.primary.light,
   Queued: (theme) => theme.palette.warning.main,
+  queued: (theme) => theme.palette.warning.main,
   Unknown: (theme) => theme.palette.text.secondary,
+  unknown: (theme) => theme.palette.text.secondary,
+  cancelled: (theme) => theme.palette.text.secondary,
 };
 
 function StatusChip({ status }) {
@@ -43,14 +50,35 @@ function StatusChip({ status }) {
   );
 }
 
+// Helper to sort runs by created_at desc and return top N (default 3)
+function topRuns(runs = [], limit = 3) {
+  try {
+    return (runs || [])
+      .slice()
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, limit);
+  } catch (e) {
+    return (runs || []).slice(0, limit);
+  }
+}
+
 export default function Workflows() {
   const theme = useTheme();
   const { data, isLoading, error } = useQuery('sheet-json', sheetAPI.getSheetJson, {
     refetchInterval: 60_000,
   });
 
+  const { data: githubActionsData, isLoading: githubActionsLoading, error: githubActionsError } = useQuery(
+    'github-actions',
+    dashboardAPI.getGithubActionsStatus,
+    {
+      refetchInterval: 120_000, // Refresh every 2 minutes
+    }
+  );
+
   const rows = data?.data?.data || [];
   const httpStatus = data?.status;
+  const githubActions = githubActionsData?.data || {};
 
   const metrics = useMemo(() => {
     const total = rows.length;
@@ -178,6 +206,141 @@ export default function Workflows() {
                   </TableBody>
                 </Table>
               </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* GitHub Actions Status Section */}
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, mt: 4 }}>
+        GitHub Actions Status
+      </Typography>
+
+      {githubActionsError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Failed to load GitHub Actions status: {githubActionsError.message}
+        </Alert>
+      )}
+
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Check API Workflow */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                Periwatch API Check
+              </Typography>
+              {githubActionsLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Status:</Typography>
+                    <StatusChip status={githubActions.check_api?.status || 'unknown'} />
+                  </Box>
+                  {githubActions.check_api?.last_run && (
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                      Last Run: {new Date(githubActions.check_api.last_run).toLocaleString()}
+                    </Typography>
+                  )}
+                  {githubActions.check_api?.last_success && (
+                    <Typography variant="body2" sx={{ color: 'success.main', mb: 1 }}>
+                      Last Success: {new Date(githubActions.check_api.last_success).toLocaleString()}
+                    </Typography>
+                  )}
+                  {githubActions.check_api?.last_failure && (
+                    <Typography variant="body2" sx={{ color: 'error.main', mb: 1 }}>
+                      Last Failure: {new Date(githubActions.check_api.last_failure).toLocaleString()}
+                    </Typography>
+                  )}
+                  {githubActions.check_api?.runs?.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+                        Recent Runs:
+                      </Typography>
+                        {topRuns(githubActions.check_api.runs, 3).map((run, idx) => (
+                        <Box key={run.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <StatusChip status={run.status} />
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {new Date(run.created_at).toLocaleString()}
+                          </Typography>
+                          {run.html_url && (
+                            <Link 
+                              href={run.html_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              sx={{ fontSize: '0.75rem' }}
+                            >
+                              View
+                            </Link>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Fetch Sheet Workflow */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                Sheet Fetch Workflow
+              </Typography>
+              {githubActionsLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Status:</Typography>
+                    <StatusChip status={githubActions.fetch_sheet?.status || 'unknown'} />
+                  </Box>
+                  {githubActions.fetch_sheet?.last_run && (
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                      Last Run: {new Date(githubActions.fetch_sheet.last_run).toLocaleString()}
+                    </Typography>
+                  )}
+                  {githubActions.fetch_sheet?.last_success && (
+                    <Typography variant="body2" sx={{ color: 'success.main', mb: 1 }}>
+                      Last Success: {new Date(githubActions.fetch_sheet.last_success).toLocaleString()}
+                    </Typography>
+                  )}
+                  {githubActions.fetch_sheet?.last_failure && (
+                    <Typography variant="body2" sx={{ color: 'error.main', mb: 1 }}>
+                      Last Failure: {new Date(githubActions.fetch_sheet.last_failure).toLocaleString()}
+                    </Typography>
+                  )}
+                  {githubActions.fetch_sheet?.runs?.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+                        Recent Runs:
+                      </Typography>
+                      {topRuns(githubActions.fetch_sheet.runs, 3).map((run, idx) => (
+                        <Box key={run.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <StatusChip status={run.status} />
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {new Date(run.created_at).toLocaleString()}
+                          </Typography>
+                          {run.html_url && (
+                            <Link 
+                              href={run.html_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              sx={{ fontSize: '0.75rem' }}
+                            >
+                              View
+                            </Link>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>

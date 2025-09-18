@@ -39,6 +39,7 @@ export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
   getValidationTrends: () => api.get('/dashboard/charts/validation-trends'),
   getTableStatus: () => api.get('/dashboard/charts/table-status'),
+  getGithubActionsStatus: () => api.get('/dashboard/github-actions'),
 };
 
 export const validationAPI = {
