@@ -91,7 +91,7 @@ export default function Workflows() {
     const failures = byStatus['Failure'] || 0;
     const successRate = total ? Math.round((successes / total) * 100) : 0;
     return { total, successes, failures, byStatus, successRate };
-  }, [rows]);
+  }, [data?.data?.data]);
 
   const pieData = useMemo(() => {
     return Object.entries(metrics.byStatus).map(([name, value]) => ({ name, value }));

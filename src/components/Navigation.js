@@ -13,7 +13,7 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    useTheme
+    
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -48,7 +48,6 @@ const menuItems = [
 ];
 
 function Navigation() {
-  const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
