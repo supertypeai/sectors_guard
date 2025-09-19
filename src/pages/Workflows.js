@@ -95,7 +95,9 @@ export default function Workflows() {
     }
   );
 
-  const rows = data?.data?.data || [];
+  // Memoize rows to avoid creating a new array each render and breaking hook deps
+  const sheetRows = data?.data?.data;
+  const rows = useMemo(() => (Array.isArray(sheetRows) ? sheetRows : []), [sheetRows]);
   const httpStatus = data?.status;
   const githubActions = githubActionsData?.data || {};
 
@@ -114,9 +116,8 @@ export default function Workflows() {
   }, [rows]);
 
   const metrics = useMemo(() => {
-    const currentRows = data?.data?.data || [];
-    const total = currentRows.length;
-    const byStatus = currentRows.reduce((acc, r) => {
+    const total = rows.length;
+    const byStatus = rows.reduce((acc, r) => {
       const s = r['Last Run Status'] || 'Unknown';
       acc[s] = (acc[s] || 0) + 1;
       return acc;
@@ -125,7 +126,7 @@ export default function Workflows() {
     const failures = byStatus['Failure'] || 0;
     const successRate = total ? Math.round((successes / total) * 100) : 0;
     return { total, successes, failures, byStatus, successRate };
-  }, [data?.data?.data]);
+  }, [rows]);
 
   const pieData = useMemo(() => {
     return Object.entries(metrics.byStatus).map(([name, value]) => ({ name, value }));
