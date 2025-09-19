@@ -1,16 +1,13 @@
 import { ShowChart } from '@mui/icons-material';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Card,
   CardContent,
   CircularProgress,
-  FormControl,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
   Tab,
   Tabs,
   TextField,
@@ -35,6 +32,8 @@ const Visualization = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedSymbol, setSelectedSymbol] = useState('');
+  const [symbolInputValue, setSymbolInputValue] = useState('');
+  const [symbolsTruncated, setSymbolsTruncated] = useState(false);
   const [startDate, setStartDate] = useState(moment().subtract(30, 'days').format('YYYY-MM-DD'));
   const [endDate, setEndDate] = useState(moment().format('YYYY-MM-DD'));
   const [data, setData] = useState([]);
@@ -94,6 +93,8 @@ const Visualization = () => {
   const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000' || 'http://localhost:8080';
   const API_BASE = `${API_HOST.replace(/\/+$/, '')}/api`;
 
+  const SYMBOL_FETCH_LIMIT = 5000;
+
   const loadAvailableSymbols = useCallback(async () => {
     try {
       // Get unique symbols from daily data as it has the most comprehensive symbol list
@@ -101,23 +102,29 @@ const Visualization = () => {
         params: {
           start_date: moment().subtract(7, 'days').format('YYYY-MM-DD'),
           end_date: moment().format('YYYY-MM-DD'),
-          limit: 500
+          limit: SYMBOL_FETCH_LIMIT
         }
       });
       
       if (response.data && response.data.data) {
-        const symbols = [...new Set(response.data.data.map(item => item.symbol))].sort();
+        const received = response.data.data || [];
+        const symbols = [...new Set(received.map(item => item.symbol))].sort();
         setAvailableSymbols(symbols);
+        // mark truncated if we likely hit the server-side limit
+        setSymbolsTruncated(received.length >= SYMBOL_FETCH_LIMIT);
         if (symbols.length > 0 && !selectedSymbol) {
           setSelectedSymbol(symbols[0]); // Set first symbol as default
+          setSymbolInputValue(symbols[0]);
         }
       }
     } catch (err) {
       console.error('Error loading symbols:', err);
       // Fallback to common Indonesian stock symbols
       setAvailableSymbols(['BBCA.JK', 'BBRI.JK', 'BMRI.JK', 'TLKM.JK', 'ASII.JK']);
+      setSymbolsTruncated(false);
       if (!selectedSymbol) {
         setSelectedSymbol('BBCA.JK');
+        setSymbolInputValue('BBCA.JK');
       }
     }
   }, [API_BASE, selectedSymbol]);
@@ -214,20 +221,46 @@ const Visualization = () => {
           </Box>
           <Grid container spacing={3} alignItems="center">
           <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Stock Symbol</InputLabel>
-              <Select
-                value={selectedSymbol}
-                label="Stock Symbol"
-                onChange={(e) => setSelectedSymbol(e.target.value)}
-              >
-                {availableSymbols.map((symbol) => (
-                  <MenuItem key={symbol} value={symbol}>
-                    {symbol}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {symbolsTruncated && (
+              <Alert severity="info" sx={{ mb: 1 }}>
+                Symbol list may be truncated. Showing first {"maximum"}
+                results. Increase server-side limit if you need the full list.
+              </Alert>
+            )}
+            <Autocomplete
+              freeSolo
+              fullWidth
+              options={availableSymbols}
+              value={selectedSymbol}
+              inputValue={symbolInputValue}
+              onInputChange={(event, newInputValue) => {
+                setSymbolInputValue(newInputValue);
+              }}
+              onChange={(event, newValue) => {
+                // newValue can be null or a selected option; if null keep input value
+                if (typeof newValue === 'string') {
+                  setSelectedSymbol(newValue);
+                  setSymbolInputValue(newValue);
+                } else if (newValue && newValue.inputValue) {
+                  setSelectedSymbol(newValue.inputValue);
+                  setSymbolInputValue(newValue.inputValue);
+                } else {
+                  setSelectedSymbol(newValue || '');
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Stock Symbol"
+                  onBlur={() => {
+                    // if user typed but didn't select, copy input into selectedSymbol
+                    if (symbolInputValue && symbolInputValue !== selectedSymbol) {
+                      setSelectedSymbol(symbolInputValue);
+                    }
+                  }}
+                />
+              )}
+            />
           </Grid>
           
           <Grid item xs={12} md={3}>

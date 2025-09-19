@@ -5,9 +5,13 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  FormControl,
   Grid,
+  InputLabel,
   Link,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -17,7 +21,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { dashboardAPI, sheetAPI } from '../services/api';
@@ -65,6 +69,7 @@ function topRuns(runs = [], limit = 3) {
 
 export default function Workflows() {
   const theme = useTheme();
+  const [statusFilter, setStatusFilter] = useState('all');
   // Cache-aware fetcher: try localStorage (today) first; only hit network if missing
   const fetchSheet = async () => {
     const cached = getCachedSheet();
@@ -93,6 +98,20 @@ export default function Workflows() {
   const rows = data?.data?.data || [];
   const httpStatus = data?.status;
   const githubActions = githubActionsData?.data || {};
+
+  // Filter rows based on selected status
+  const filteredRows = useMemo(() => {
+    if (statusFilter === 'all') {
+      return rows;
+    }
+    return rows.filter(row => row['Last Run Status'] === statusFilter);
+  }, [rows, statusFilter]);
+
+  // Get unique status values for filter dropdown
+  const uniqueStatuses = useMemo(() => {
+    const statuses = [...new Set(rows.map(row => row['Last Run Status']).filter(Boolean))];
+    return statuses.sort();
+  }, [rows]);
 
   const metrics = useMemo(() => {
     const currentRows = data?.data?.data || [];
@@ -194,7 +213,24 @@ export default function Workflows() {
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>Recent Checks</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Recent Checks</Typography>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Status Filter</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    label="Status Filter"
+                  >
+                    <MenuItem value="all">All</MenuItem>
+                    {uniqueStatuses.map((status) => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
               <TableContainer component={Paper}>
                 <Table size="small">
                   <TableHead>
@@ -208,7 +244,7 @@ export default function Workflows() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {rows.map((r, idx) => (
+                    {filteredRows.map((r, idx) => (
                       <TableRow key={idx}>
                         <TableCell>{r.Owner}/{r.Repo}</TableCell>
                         <TableCell>{r['Workflow File']}</TableCell>
