@@ -1,14 +1,26 @@
 import { Analytics } from '@mui/icons-material';
 import { AppBar, Box, Container, CssBaseline, Toolbar, Typography } from '@mui/material';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import Dashboard from './pages/Dashboard';
 import TableConfiguration from './pages/TableConfiguration';
 import ValidationResults from './pages/ValidationResults';
 import Visualization from './pages/Visualization';
 import Workflows from './pages/Workflows';
+import Access from './pages/Access';
+import { getAuthToken } from './services/api';
+
+function ProtectedRoute({ children }) {
+  const token = getAuthToken();
+  if (!token) {
+    return <Navigate to="/access" replace />;
+  }
+  return children;
+}
 
 function App() {
+  const location = useLocation();
+  const isAccessPage = location.pathname === '/access';
   return (
     <>
       <CssBaseline />
@@ -74,7 +86,7 @@ function App() {
             minHeight: 'calc(100vh - 80px)',
           }}
         >
-          <Navigation />
+          {!isAccessPage && <Navigation />}
           
           <Container 
             component="main" 
@@ -86,12 +98,37 @@ function App() {
             }}
           >
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/validation-results" element={<ValidationResults />} />
-              <Route path="/table-configuration" element={<TableConfiguration />} />
-              <Route path="/visualization" element={<Visualization />} />
-              <Route path="/workflows" element={<Workflows />} />
+              <Route path="/access" element={<Access />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/validation-results" element={
+                <ProtectedRoute>
+                  <ValidationResults />
+                </ProtectedRoute>
+              } />
+              <Route path="/table-configuration" element={
+                <ProtectedRoute>
+                  <TableConfiguration />
+                </ProtectedRoute>
+              } />
+              <Route path="/visualization" element={
+                <ProtectedRoute>
+                  <Visualization />
+                </ProtectedRoute>
+              } />
+              <Route path="/workflows" element={
+                <ProtectedRoute>
+                  <Workflows />
+                </ProtectedRoute>
+              } />
             </Routes>
           </Container>
         </Box>

@@ -276,7 +276,7 @@ export default function Workflows() {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Check API Workflow */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card style={{ height: '100%' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
                 Periwatch API Check
@@ -337,7 +337,7 @@ export default function Workflows() {
 
         {/* Fetch Sheet Workflow */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card style={{ height: '100%' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
                 Sheet Fetch Workflow

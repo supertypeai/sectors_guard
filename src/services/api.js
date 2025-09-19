@@ -1,35 +1,73 @@
 import axios from 'axios';
 
-const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000' || 'http://localhost:8080';
+// Base URL configuration (keep env override support)
+const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const API_BASE_URL = `${API_HOST.replace(/\/+$/, '')}/api`;
-const API_TOKEN = process.env.REACT_APP_API_TOKEN;
+
+// Token management (runtime, persisted in localStorage)
+const TOKEN_STORAGE_KEY = 'api_token';
+let runtimeToken = null;
+
+export const getAuthToken = () => {
+  return runtimeToken || (typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_STORAGE_KEY) : null);
+};
+
+export const setAuthToken = (token) => {
+  runtimeToken = token || null;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      else localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
+  } catch (_) {
+    // ignore storage errors
+  }
+};
+
+export const clearAuthToken = () => {
+  runtimeToken = null;
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(TOKEN_STORAGE_KEY);
+  } catch (_) {
+    // ignore
+  }
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 1200000,
 });
 
-// Request interceptor
+// Request interceptor: attach Bearer token if present
 api.interceptors.request.use(
   (config) => {
-    // Add any auth headers here if needed
-    if (API_TOKEN) {
+    const token = getAuthToken();
+    if (token) {
       config.headers = {
         ...(config.headers || {}),
-        Authorization: `Bearer ${API_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       };
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Response interceptor: handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      clearAuthToken();
+      // Redirect to access page on auth failure
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/access') {
+          window.location.assign('/access');
+        }
+      }
+    }
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }

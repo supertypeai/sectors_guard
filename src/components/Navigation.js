@@ -3,7 +3,8 @@ import {
   Dashboard as DashboardIcon,
   Settings as SettingsIcon,
   Timeline as TimelineIcon,
-  BarChart as VisualizationIcon
+  BarChart as VisualizationIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -15,6 +16,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { clearAuthToken } from '../services/api';
 
 const DRAWER_WIDTH = 240;
 
@@ -110,6 +112,32 @@ function Navigation() {
               </ListItemButton>
             </ListItem>
           ))}
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                clearAuthToken();
+                navigate('/access', { replace: true });
+              }}
+              sx={{
+                mx: 1,
+                mt: 1,
+                borderRadius: 1.5,
+                color: (theme) => theme.palette.text.secondary,
+                '&:hover': {
+                  backgroundColor: (theme) => theme.palette.action.hover,
+                  color: (theme) => theme.palette.text.primary,
+                  '& .MuiListItemIcon-root': {
+                    color: (theme) => theme.palette.error.main,
+                  },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'inherit' }}>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Box>
     </Drawer>
