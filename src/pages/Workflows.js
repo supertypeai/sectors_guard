@@ -21,6 +21,7 @@ import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { dashboardAPI, sheetAPI } from '../services/api';
+import { getCachedSheet, setCachedSheet } from '../services/sheetCache';
 
 const STATUS_COLORS = {
   Success: (theme) => theme.palette.success.main,
@@ -64,7 +65,20 @@ function topRuns(runs = [], limit = 3) {
 
 export default function Workflows() {
   const theme = useTheme();
-  const { data, isLoading, error } = useQuery('sheet-json', sheetAPI.getSheetJson, {
+  // Cache-aware fetcher: try localStorage (today) first; only hit network if missing
+  const fetchSheet = async () => {
+    const cached = getCachedSheet();
+    if (cached && Array.isArray(cached)) {
+      // mimic axios-like shape expected below by returning { data: { data: cached } }
+      return { data: { data: cached } };
+    }
+    const resp = await sheetAPI.getSheetJson();
+    const rows = resp?.data?.data || [];
+    setCachedSheet(rows);
+    return resp;
+  };
+
+  const { data, isLoading, error } = useQuery('sheet-json', fetchSheet, {
     refetchInterval: 60_000,
   });
 
@@ -72,7 +86,7 @@ export default function Workflows() {
     'github-actions',
     dashboardAPI.getGithubActionsStatus,
     {
-      refetchInterval: 120_000, // Refresh every 2 minutes
+      refetchInterval: 86400_000, // Refresh every 24 hours
     }
   );
 
