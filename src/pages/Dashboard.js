@@ -38,7 +38,7 @@ const IDX_TABLES = [
   validationRule: 'Year-over-year changes >50% vs multi-year average'
   },
   {
-    name: 'idx_combine_financials_quarterly',
+    name: 'idx_combine_financials quarterly',
     icon: <TrendingUp />,
     description: 'Quarterly Financial Data - Revenue, earnings, assets validation',
     validationType: 'Financial Performance (Quarterly)',
@@ -78,6 +78,20 @@ const IDX_TABLES = [
     description: 'Stock Split Timing Validation',
     validationType: 'Stock Split Analysis',
   validationRule: 'Multiple stock splits within 14 days for the same symbol'
+  },
+  {
+    name: 'sgx_company_report',
+    icon: <TableChart />,
+    description: 'SGX Company Report - Market cap & volume completeness, close-date recency (SGT), historical financials change detection',
+    validationType: 'SGX Company Report Validation',
+    validationRule: 'market_cap & volume not null; latest close date = today (SGT); extreme % changes across financials'
+  },
+  {
+    name: 'sgx_manual_input',
+    icon: <CheckCircle />,
+    description: 'SGX Manual Input - Business logic validation for customer breakdown and property counts vs total revenue',
+    validationType: 'SGX Manual Input Validation',
+    validationRule: 'customer_breakdown sum <= total_revenue; property_counts sum <= total_revenue'
   },
 ];
 
@@ -232,7 +246,7 @@ function Dashboard() {
               </Box>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                  IDX Financial Tables Overview
+                  Tables Overview
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Specialized validation for Indonesian Stock Exchange financial data
@@ -282,7 +296,7 @@ function Dashboard() {
                           </Box>
                           <Box sx={{ flex: 1 }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, fontSize: '0.95rem' }}>
-                              {table.name.replace('idx_', '').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {table.name.replace('idx_', 'IDX ').replace('sgx_', 'SGX ').replace('_', ' ').replace('_', ' ').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </Typography>
                             <Chip
                               label={table.validationType}

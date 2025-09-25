@@ -84,6 +84,18 @@ const Visualization = () => {
       name: 'Filings',
       description: 'Corporate filings and insider trading',
       component: FilingsChart
+    },
+    {
+      id: 'sgx_company_report',
+      name: 'SGX Company Report',
+      description: 'SGX company reports with market cap, volume, and financial data',
+      component: DailyDataChart // Reusing DailyDataChart as a placeholder since SGX data structure is similar
+    },
+    {
+      id: 'sgx_manual_input',
+      name: 'SGX Manual Input',
+      description: 'SGX manual input data with business logic validation',
+      component: DailyDataChart // Placeholder component for manual input data visualization
     }
   ];
 
