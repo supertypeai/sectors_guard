@@ -38,7 +38,7 @@ const IDX_TABLES = [
   validationRule: 'Year-over-year changes >50% vs multi-year average'
   },
   {
-    name: 'idx_combine_financials quarterly',
+    name: 'idx_combine_financials_quarterly',
     icon: <TrendingUp />,
     description: 'Quarterly Financial Data - Revenue, earnings, assets validation',
     validationType: 'Financial Performance (Quarterly)',
@@ -78,6 +78,13 @@ const IDX_TABLES = [
     description: 'Stock Split Timing Validation',
     validationType: 'Stock Split Analysis',
   validationRule: 'Multiple stock splits within 14 days for the same symbol'
+  },
+  {
+    name: 'idx_news',
+    icon: <Warning />,
+    description: 'News table subsector tagging validation (max 5 unique subsectors)',
+    validationType: 'News Subsector Validation',
+    validationRule: 'subsector list length ≤5 and no duplicate entries'
   },
   {
     name: 'sgx_company_report',

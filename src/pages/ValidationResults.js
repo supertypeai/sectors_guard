@@ -565,6 +565,9 @@ function ValidationResults() {
                                 {anomaly.metric && (
                                   <Chip label={anomaly.metric} size="small" sx={{ bgcolor: (theme) => alpha(theme.palette.background.default, 0.3), color: 'text.secondary' }} />
                                 )}
+                                {anomaly.id && (
+                                  <Chip label={`ID: ${anomaly.id}`} size="small" sx={{ bgcolor: (theme) => alpha(theme.palette.background.default, 0.3), color: 'text.secondary' }} />
+                                )}
                                 {anomaly.symbol && (
                                   <Chip label={`Symbol: ${anomaly.symbol}`} size="small" sx={{ bgcolor: (theme) => alpha(theme.palette.background.default, 0.3), color: 'text.secondary' }} />
                                 )}
