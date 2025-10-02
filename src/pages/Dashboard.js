@@ -115,6 +115,13 @@ const IDX_TABLES = [
     validationType: 'SGX Manual Input Validation',
     validationRule: 'customer_breakdown sum <= total_revenue; property_counts sum <= total_revenue'
   },
+  {
+    name: 'idx_company_profile',
+    icon: <CheckCircle />,
+    description: 'Company Profile Validation - Shareholders percentage and company details check',
+    validationType: 'Company Profile Validation',
+    validationRule: 'Shareholders share_percentage sum should be ~100% (±1%); sector and industry not empty'
+  },
 ];
 
 function Dashboard() {

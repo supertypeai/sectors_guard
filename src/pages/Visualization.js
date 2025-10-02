@@ -96,6 +96,12 @@ const Visualization = () => {
       name: 'SGX Manual Input',
       description: 'SGX manual input data with business logic validation',
       component: DailyDataChart // Placeholder component for manual input data visualization
+    },
+    {
+      id: 'idx_company_profile',
+      name: 'Company Profile',
+      description: 'Company profile with shareholders and company details',
+      component: DailyDataChart // Placeholder component for company profile visualization
     }
   ];
 

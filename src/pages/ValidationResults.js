@@ -582,7 +582,58 @@ function ValidationResults() {
                               <Typography variant="body2" sx={{ color: 'text.primary', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                                 {anomaly.message}
                               </Typography>
-                              {anomaly.difference !== undefined && (<Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>Difference: {Number(anomaly.difference).toLocaleString()} ({Number(anomaly.difference_pct || 0).toFixed(2)}%)</Typography>)}
+                              
+                              {/* Shareholders percentage mismatch - idx_company_profile */}
+                              {anomaly.total_percentage !== undefined && anomaly.difference !== undefined && (
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+                                  Total: {anomaly.total_percentage}% | Difference: {Number(anomaly.difference).toFixed(2)}%
+                                </Typography>
+                              )}
+                              
+                              {/* Filing price discrepancy - idx_filings */}
+                              {anomaly.filing_price !== undefined && anomaly.daily_close_price !== undefined && anomaly.price_difference_pct !== undefined && (
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+                                  Filing Price: {Number(anomaly.filing_price).toLocaleString()} | Daily Close: {Number(anomaly.daily_close_price).toLocaleString()} | Difference: {Number(anomaly.price_difference_pct).toFixed(2)}%
+                                </Typography>
+                              )}
+                              
+                              {/* Daily price change - idx_daily_data */}
+                              {anomaly.close_price !== undefined && anomaly.price_change_pct !== undefined && (
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+                                  Close Price: {Number(anomaly.close_price).toLocaleString()} | Price Change: {Number(anomaly.price_change_pct).toFixed(2)}%
+                                </Typography>
+                              )}
+                              
+                              {/* Stock split - idx_stock_split */}
+                              {anomaly.first_split_date && anomaly.second_split_date && anomaly.days_between !== undefined && (
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+                                  First Split: {anomaly.first_split_date} | Second Split: {anomaly.second_split_date} | Days Between: {anomaly.days_between}
+                                </Typography>
+                              )}
+                              
+                              {/* SGX manual input violations - customer/property breakdown */}
+                              {anomaly.customer_breakdown_sum !== undefined && anomaly.total_revenue !== undefined && (
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+                                  Customer Breakdown Sum: {Number(anomaly.customer_breakdown_sum).toLocaleString()} | Total Revenue: {Number(anomaly.total_revenue).toLocaleString()} | Difference: {Number(anomaly.difference).toLocaleString()} ({Number(anomaly.difference_pct).toFixed(2)}%)
+                                </Typography>
+                              )}
+                              
+                              {anomaly.property_counts_sum !== undefined && anomaly.total_revenue !== undefined && !anomaly.customer_breakdown_sum && (
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+                                  Property Counts Sum: {Number(anomaly.property_counts_sum).toLocaleString()} | Total Revenue: {Number(anomaly.total_revenue).toLocaleString()} | Difference: {Number(anomaly.difference).toLocaleString()} ({Number(anomaly.difference_pct).toFixed(2)}%)
+                                </Typography>
+                              )}
+                              
+                              {/* Generic difference display for other cases */}
+                              {anomaly.difference !== undefined && 
+                               !anomaly.total_percentage && 
+                               !anomaly.filing_price && 
+                               !anomaly.customer_breakdown_sum && 
+                               !anomaly.property_counts_sum && (
+                                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+                                  Difference: {Number(anomaly.difference).toLocaleString()}{anomaly.difference_pct ? ` (${Number(anomaly.difference_pct).toFixed(2)}%)` : ''}
+                                </Typography>
+                              )}
                             </Box>
                           }
                         />
