@@ -45,11 +45,26 @@ const IDX_TABLES = [
   validationRule: 'Quarter-over-quarter changes >50% vs seasonal average'
   },
   {
+    name: 'index_daily_data',
+    icon: <TableChart />,
+    description: 'Daily Index Data - Coverage check for available indices',
+    validationType: 'Index Coverage (Daily)',
+    validationRule: 'Exactly 18 unique index_code entries per date'
+  },
+  {
     name: 'idx_daily_data',
     icon: <ShowChart />,
     description: 'Daily Stock Price Data - Price movement monitoring (last 7 days)',
     validationType: 'Price Movement Monitoring',
   validationRule: 'Daily close change >35% or abnormal volume spike (last 7 days)'
+  },
+  {
+    name: 'idx_daily_data_completeness',
+    displayName: 'Daily Data (Completeness)',
+    icon: <ShowChart />,
+    description: 'Daily Stock Data - Completeness vs active symbols and non-null checks (yesterday, weekdays only)',
+    validationType: 'Daily Data (Completeness)',
+    validationRule: 'Per date: symbol coverage equals active list; close, volume, and market_cap all non-null'
   },
   {
     name: 'idx_dividend',
@@ -303,7 +318,7 @@ function Dashboard() {
                           </Box>
                           <Box sx={{ flex: 1 }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, fontSize: '0.95rem' }}>
-                              {table.name.replace('idx_', 'IDX ').replace('sgx_', 'SGX ').replace('_', ' ').replace('_', ' ').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {table.displayName || table.name.replace('idx_', 'IDX ').replace('sgx_', 'SGX ').replace('_', ' ').replace('_', ' ').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </Typography>
                             <Chip
                               label={table.validationType}
