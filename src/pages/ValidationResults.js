@@ -33,12 +33,16 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  MenuItem,
+  Select,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -59,6 +63,8 @@ function ValidationResults() {
   const [endDate, setEndDate] = useState('');
   const [appliedStartDate, setAppliedStartDate] = useState('');
   const [appliedEndDate, setAppliedEndDate] = useState('');
+  const [viewMode, setViewMode] = useState('by-time'); // 'by-time' or 'by-table'
+  const [selectedTableFilter, setSelectedTableFilter] = useState('');
   const queryClient = useQueryClient();
 
   const { data: tables, isLoading: tablesLoading } = useQuery(
@@ -71,6 +77,15 @@ function ValidationResults() {
     () => validationAPI.getResults(),
     {
       refetchInterval: 30000, // Refresh every 30 seconds
+    }
+  );
+
+  const { data: tableResults, isLoading: tableResultsLoading } = useQuery(
+    ['validation-results-by-table', selectedTableFilter],
+    () => validationAPI.getResultsByTable(selectedTableFilter, 5),
+    {
+      enabled: viewMode === 'by-table' && !!selectedTableFilter,
+      refetchInterval: 30000,
     }
   );
 
@@ -372,132 +387,272 @@ function ValidationResults() {
       <Fade in timeout={1000}>
         <Card sx={{ borderRadius: 2 }}>
           <CardContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-              <AccessTime sx={{ color: 'primary.main' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                Recent Validation Results ({resultsData.length})
-              </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <AccessTime sx={{ color: 'primary.main' }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  Recent Validation Results
+                </Typography>
+              </Box>
             </Box>
 
-            {resultsLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
-              </Box>
-            ) : resultsData.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-                <BugReport sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  No validation results yet
-                </Typography>
-                <Typography variant="body2">
-                  Run a validation to see results here
-                </Typography>
-              </Box>
-            ) : (
-              <Box sx={{ overflow: 'hidden', borderRadius: 3 }}>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow sx={{ background: (theme) => alpha(theme.palette.primary.main, 0.05) }}>
-                        <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Table Name</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Validations</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Total Rows</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Timestamp</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Anomalies</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Created At</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {resultsData.map((result, index) => (
-                        <TableRow 
-                          key={result.id || index}
-                          sx={{
-                            '&:hover': {
-                              background: alpha(theme.palette.primary.main, 0.02),
-                            },
-                            borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
-                          }}
-                        >
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {getStatusIcon(result.status)}
-                              <Chip
-                                label={result.status}
-                                color={getStatusColor(result.status)}
-                                size="small"
-                                sx={{ 
-                                  textTransform: 'capitalize',
-                                  fontWeight: 600,
-                                }}
-                              />
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                              {result.table_name?.replace('idx_', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown'}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                              {result.table_name}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            {Array.isArray(result.validations_performed) && result.validations_performed.length > 0 ? (
-                              result.validations_performed.map((v, i) => (
-                                <Chip key={i} label={v.replace(/_/g, ' ')} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                              ))
-                            ) : (
-                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>-</Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                              {result.total_rows?.toLocaleString?.() ?? result.total_rows ?? '-'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              {moment(result.validation_timestamp).format('MMM DD, YYYY HH:mm')}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="body2" sx={{ fontWeight: 700, color: (theme) => (result.anomalies_count > 0 ? theme.palette.warning.main : theme.palette.success.main) }}>
-                                {result.anomalies_count || 0}
-                              </Typography>
-                              {result.anomalies_count > 0 && (<Warning sx={{ fontSize: 16, color: 'warning.main' }} />)}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              {moment(result.created_at).format('MMM DD, YYYY HH:mm')}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Tooltip title="View Details">
-                              <IconButton
-                                onClick={() => handleViewDetails(result)}
-                                size="small"
-                                sx={{
-                                  background: alpha(theme.palette.primary.main, 0.1),
-                                  color: theme.palette.primary.main,
-                                  '&:hover': {
-                                    background: alpha(theme.palette.primary.main, 0.2),
-                                  },
-                                }}
-                              >
-                                <Visibility fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+            {/* Tabs for View Mode */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+              <Tabs 
+                value={viewMode} 
+                onChange={(e, newValue) => setViewMode(newValue)}
+                sx={{
+                  '& .MuiTabs-indicator': {
+                    backgroundColor: 'primary.main',
+                  },
+                }}
+              >
+                <Tab 
+                  label="By Time" 
+                  value="by-time"
+                  sx={{ 
+                    textTransform: 'none', 
+                    fontWeight: 600,
+                    '&.Mui-selected': { color: 'primary.main' }
+                  }}
+                />
+                <Tab 
+                  label="By Table" 
+                  value="by-table"
+                  sx={{ 
+                    textTransform: 'none', 
+                    fontWeight: 600,
+                    '&.Mui-selected': { color: 'primary.main' }
+                  }}
+                />
+              </Tabs>
+            </Box>
+
+            {/* Table Selector for By Table View */}
+            {viewMode === 'by-table' && (
+              <Box sx={{ mb: 3 }}>
+                <Select
+                  fullWidth
+                  value={selectedTableFilter}
+                  onChange={(e) => setSelectedTableFilter(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) => alpha(theme.palette.primary.main, 0.3),
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) => alpha(theme.palette.primary.main, 0.5),
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>
+                    <em>Select a table...</em>
+                  </MenuItem>
+                  {tablesData.map((table) => (
+                    <MenuItem key={table.name} value={table.name}>
+                      {table.name}
+                    </MenuItem>
+                  ))}
+                </Select>
               </Box>
             )}
+
+            {/* By Time View */}
+            {viewMode === 'by-time' && (
+              <>
+                {resultsLoading ? (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : resultsData.length === 0 ? (
+                  <Alert severity="info" sx={{ borderRadius: 2 }}>
+                    No validation results found. Run a validation to see results.
+                  </Alert>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05) }}>
+                          <TableCell sx={{ fontWeight: 600 }}>Table Name</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Total Rows</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Anomalies</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Timestamp</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {resultsData.map((result, index) => (
+                          <TableRow 
+                            key={result.id || index}
+                            sx={{ 
+                              '&:hover': { 
+                                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.02),
+                              },
+                            }}
+                          >
+                            <TableCell>
+                              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
+                                {result.table_name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                icon={getStatusIcon(result.status)}
+                                label={result.status?.toUpperCase() || 'N/A'}
+                                size="small"
+                                sx={(theme) => ({
+                                  backgroundColor: alpha(theme.palette[getStatusColor(result.status)]?.main || theme.palette.grey[500], 0.1),
+                                  color: theme.palette[getStatusColor(result.status)]?.main || theme.palette.grey[500],
+                                  fontWeight: 600,
+                                  borderRadius: 2,
+                                })}
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ fontWeight: 500 }}>
+                                {result.total_rows?.toLocaleString() || 0}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Chip
+                                label={result.anomalies_count || 0}
+                                size="small"
+                                color={result.anomalies_count > 0 ? 'error' : 'default'}
+                                sx={{ fontWeight: 600, borderRadius: 2 }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Tooltip title={moment(result.validation_timestamp).format('LLLL')}>
+                                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                  {moment(result.validation_timestamp).fromNow()}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Tooltip title="View Details">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleViewDetails(result)}
+                                  sx={{
+                                    color: 'primary.main',
+                                    '&:hover': {
+                                      backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                                    },
+                                  }}
+                                >
+                                  <Visibility fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </>
+            )}
+
+            {/* By Table View */}
+            {viewMode === 'by-table' && (
+              <>
+                {!selectedTableFilter ? (
+                  <Alert severity="info" sx={{ borderRadius: 2 }}>
+                    Please select a table to view its recent validation results.
+                  </Alert>
+                ) : tableResultsLoading ? (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : (tableResults?.data?.data?.results || []).length === 0 ? (
+                  <Alert severity="info" sx={{ borderRadius: 2 }}>
+                    No validation results found for <strong>{selectedTableFilter}</strong>.
+                  </Alert>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05) }}>
+                          <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Total Rows</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Anomalies</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Timestamp</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(tableResults?.data?.data?.results || []).map((result, index) => (
+                          <TableRow 
+                            key={result.id || index}
+                            sx={{ 
+                              '&:hover': { 
+                                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.02),
+                              },
+                            }}
+                          >
+                            <TableCell>
+                              <Chip
+                                icon={getStatusIcon(result.status)}
+                                label={result.status?.toUpperCase() || 'N/A'}
+                                size="small"
+                                sx={(theme) => ({
+                                  backgroundColor: alpha(theme.palette[getStatusColor(result.status)]?.main || theme.palette.grey[500], 0.1),
+                                  color: theme.palette[getStatusColor(result.status)]?.main || theme.palette.grey[500],
+                                  fontWeight: 600,
+                                  borderRadius: 2,
+                                })}
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ fontWeight: 500 }}>
+                                {result.total_rows?.toLocaleString() || 0}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Chip
+                                label={result.anomalies_count || 0}
+                                size="small"
+                                color={result.anomalies_count > 0 ? 'error' : 'default'}
+                                sx={{ fontWeight: 600, borderRadius: 2 }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Tooltip title={moment(result.validation_timestamp).format('LLLL')}>
+                                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                  {moment(result.validation_timestamp).fromNow()}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Tooltip title="View Details">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleViewDetails(result)}
+                                  sx={{
+                                    color: 'primary.main',
+                                    '&:hover': {
+                                      backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                                    },
+                                  }}
+                                >
+                                  <Visibility fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </>
+            )}
+
           </CardContent>
         </Card>
       </Fade>

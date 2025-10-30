@@ -117,6 +117,15 @@ export const validationAPI = {
       return response;
     });
   },
+  getResultsByTable: (tableName, limit = 5) => {
+    return api.get(`/dashboard/results/by-table/${tableName}?limit=${limit}`).then(response => {
+      // Handle fallback responses
+      if (response.data.source === 'local_storage') {
+        console.warn('⚠️ Using local storage - database unavailable');
+      }
+      return response;
+    });
+  },
   getTableConfig: (tableName) => api.get(`/validation/config/${tableName}`),
   saveTableConfig: (tableName, payload) => api.post(`/validation/config/${tableName}`, payload),
 };

@@ -29,7 +29,7 @@ import TableStatusChart from '../components/TableStatusChart';
 import ValidationTrendsChart from '../components/ValidationTrendsChart';
 import { dashboardAPI } from '../services/api';
 
-const IDX_TABLES = [
+const ALL_TABLES = [
   {
     name: 'idx_combine_financials_annual',
     icon: <AccountBalance />,
@@ -194,8 +194,8 @@ function Dashboard() {
         <Grow in timeout={600}>
           <Grid item xs={12} sm={6} md={3}>
             <StatCard
-              title="Total IDX Tables"
-              value={statsLoading ? '...' : (statsData.total_tables || IDX_TABLES.length)}
+              title="Total Tables"
+              value={statsLoading ? '...' : (statsData.total_tables || ALL_TABLES.length)}
               subtitle="Financial data tables"
               icon={<TableChart />}
             />
@@ -284,7 +284,7 @@ function Dashboard() {
             </Box>
             
             <Grid container spacing={3}>
-              {IDX_TABLES.map((table, index) => (
+              {ALL_TABLES.map((table, index) => (
                 <Zoom 
                   key={table.name} 
                   in 
