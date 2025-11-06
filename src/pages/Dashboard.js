@@ -45,6 +45,20 @@ const ALL_TABLES = [
   validationRule: 'Quarter-over-quarter changes >50% vs seasonal average'
   },
   {
+    name: 'idx_financial_sheets_annual',
+    icon: <AccountBalance />,
+    description: 'Annual Financial Sheets - Accounting identity validation (net income flow, minority check, revenue positivity)',
+    validationType: 'Financial Sheets (Annual)',
+    validationRule: 'Golden rules: net_income = pretax_income - taxes + minorities; minorities=0 → net_income=profit_parent; revenue>0'
+  },
+  {
+    name: 'idx_financial_sheets_quarterly',
+    icon: <TrendingUp />,
+    description: 'Quarterly Financial Sheets - Accounting identity validation (net income flow, minority check, revenue positivity)',
+    validationType: 'Financial Sheets (Quarterly)',
+    validationRule: 'Golden rules: net_income = pretax_income - taxes + minorities; minorities=0 → net_income=profit_parent; revenue>0'
+  },
+  {
     name: 'index_daily_data',
     icon: <TableChart />,
     description: 'Daily Index Data - Coverage check for available indices',
