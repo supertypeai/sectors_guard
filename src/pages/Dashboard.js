@@ -136,6 +136,13 @@ const ALL_TABLES = [
     validationType: 'Company Profile Validation',
     validationRule: 'Shareholders share_percentage sum should be ~100% (±1%); sector and industry not empty'
   },
+  {
+    name: 'idx_sector_reports',
+    icon: <TrendingUp />,
+    description: 'Sector Reports Data Freshness - Validates daily market cap performance updates',
+    validationType: 'Sector Reports Validation',
+    validationRule: 'mcap_summary.monthly_performance must contain data for yesterday or today (Jakarta timezone)'
+  },
 ];
 
 function Dashboard() {
