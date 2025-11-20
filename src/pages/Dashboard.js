@@ -143,6 +143,13 @@ const ALL_TABLES = [
     validationType: 'Sector Reports Validation',
     validationRule: 'mcap_summary.monthly_performance must contain data for yesterday or today (Jakarta timezone)'
   },
+  {
+    name: 'sgx_filings',
+    icon: <Warning />,
+    description: 'SGX Filings Data - Duplicate detection and transaction completeness validation',
+    validationType: 'SGX Filings Validation',
+    validationRule: 'Duplicate checks on composite key (url, shareholder_name, transaction_date, shares_before, shares_after); Missing transaction details check (number_of_stock, value, price_per_share)'
+  },
 ];
 
 function Dashboard() {
