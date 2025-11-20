@@ -187,7 +187,8 @@ function ValidationResults() {
   };
 
   const tablesData = tables?.data?.tables || [];
-  const resultsData = results?.data?.results || results?.data?.data?.results || [];
+  const allResultsData = results?.data?.results || results?.data?.data?.results || [];
+  const resultsData = allResultsData.filter(result => !result.table_name?.startsWith('rpc_get_'));
 
   return (
     <Box>
@@ -696,13 +697,17 @@ function ValidationResults() {
                 </Grid>
               </Grid>
 
-              {selectedResult.anomalies && selectedResult.anomalies.length > 0 && (
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 2, color: 'text.primary' }}>
-                    Anomalies Detected
-                  </Typography>
-                  <List sx={{ background: (theme) => alpha(theme.palette.background.default, 0.2), borderRadius: 2, p: 2 }}>
-                    {selectedResult.anomalies.map((anomaly, index) => (
+              {(() => {
+                const anomalies = typeof selectedResult.anomalies === 'string' 
+                  ? JSON.parse(selectedResult.anomalies) 
+                  : selectedResult.anomalies;
+                return anomalies && anomalies.length > 0 && (
+                  <Box>
+                    <Typography variant="h6" sx={{ mb: 2, color: 'text.primary' }}>
+                      Anomalies Detected
+                    </Typography>
+                    <List sx={{ background: (theme) => alpha(theme.palette.background.default, 0.2), borderRadius: 2, p: 2 }}>
+                      {anomalies.map((anomaly, index) => (
                         <ListItem key={index} sx={{ border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.5)}`, borderRadius: 2, mb: 1, background: (theme) => alpha(theme.palette.background.paper, 0.6), alignItems: 'flex-start' }}>
                         <ListItemIcon sx={{ mt: 0.5 }}>
                           {getSeverityIcon(anomaly.severity)}
@@ -796,9 +801,14 @@ function ValidationResults() {
                     ))}
                   </List>
                 </Box>
-              )}
+              );
+              })()}
 
-              {(!selectedResult.anomalies || selectedResult.anomalies.length === 0) && (
+              {(() => {
+                const anomalies = typeof selectedResult.anomalies === 'string' 
+                  ? JSON.parse(selectedResult.anomalies) 
+                  : selectedResult.anomalies;
+                return (!anomalies || anomalies.length === 0) && (
                 <Box sx={{ textAlign: 'center', py: 4, background: (theme) => alpha(theme.palette.success.main, 0.05), borderRadius: 2 }}>
                   <CheckCircle sx={{ fontSize: 48, color: theme.palette.success.main, mb: 1 }} />
                   <Typography variant="h6" sx={{ color: theme.palette.success.main }}>
@@ -808,7 +818,8 @@ function ValidationResults() {
                     All validations passed successfully
                   </Typography>
                 </Box>
-              )}
+              );
+              })()}
             </Box>
           )}
         </DialogContent>

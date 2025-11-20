@@ -23,6 +23,7 @@ import {
   useTheme
 } from '@mui/material';
 import { useQuery } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 
 import StatCard from '../components/StatCard';
 import TableStatusChart from '../components/TableStatusChart';
@@ -150,10 +151,18 @@ const ALL_TABLES = [
     validationType: 'SGX Filings Validation',
     validationRule: 'Duplicate checks on composite key (url, shareholder_name, transaction_date, shares_before, shares_after); Missing transaction details check (number_of_stock, value, price_per_share)'
   },
+  {
+    name: 'rpc_functions',
+    icon: <CheckCircle />,
+    description: 'RPC Functions Validation - Date freshness and data availability checks for 16 Supabase functions',
+    validationType: 'RPC Functions Validation',
+    validationRule: 'Validates get_idx_mcap_data_1m, get_indices_price_changes, get_top_mcap_gainers/losers, get_top_gainers/losers, get_peers_and_idx_valuation_summary, get_idx_peers_growth_and_forecasts, get_news_per_dimensions_by_ticker_subsector, get_idx_yield_ttm, get_companies_loan_quality, get_idx_resilience, get_companies_state_owned, get_upcoming_dividends_and_splits, get_idx_most_traded, get_idx_volume'
+  },
 ];
 
 function Dashboard() {
   const theme = useTheme();
+  const navigate = useNavigate();
   
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery(
     'dashboard-stats',
@@ -321,6 +330,11 @@ function Dashboard() {
                 >
                   <Grid item xs={12} md={6} lg={4}>
                     <Card
+                      onClick={() => {
+                        if (table.name === 'rpc_functions') {
+                          navigate('/rpc-validation');
+                        }
+                      }}
                       sx={{
                         height: '100%',
                         borderRadius: 3,
@@ -328,6 +342,7 @@ function Dashboard() {
                         backdropFilter: 'blur(15px)',
                         border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        cursor: table.name === 'rpc_functions' ? 'pointer' : 'default',
                         '&:hover': {
                           transform: 'translateY(-8px)',
                           boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.3)}`,

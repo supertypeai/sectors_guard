@@ -2,12 +2,13 @@ import { Analytics } from '@mui/icons-material';
 import { AppBar, Box, Container, CssBaseline, Toolbar, Typography } from '@mui/material';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Navigation from './components/Navigation';
+import Access from './pages/Access';
 import Dashboard from './pages/Dashboard';
+import RPCValidation from './pages/RPCValidation';
 import TableConfiguration from './pages/TableConfiguration';
 import ValidationResults from './pages/ValidationResults';
 import Visualization from './pages/Visualization';
 import Workflows from './pages/Workflows';
-import Access from './pages/Access';
 import { getAuthToken } from './services/api';
 
 function ProtectedRoute({ children }) {
@@ -127,6 +128,11 @@ function App() {
               <Route path="/workflows" element={
                 <ProtectedRoute>
                   <Workflows />
+                </ProtectedRoute>
+              } />
+              <Route path="/rpc-validation" element={
+                <ProtectedRoute>
+                  <RPCValidation />
                 </ProtectedRoute>
               } />
             </Routes>

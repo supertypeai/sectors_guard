@@ -128,6 +128,7 @@ export const validationAPI = {
   },
   getTableConfig: (tableName) => api.get(`/validation/config/${tableName}`),
   saveTableConfig: (tableName, payload) => api.post(`/validation/config/${tableName}`, payload),
+  runSingleRPCValidation: (functionName) => api.post(`/validation/run/rpc-functions/${functionName}`),
 };
 
 // Sheet monitoring API

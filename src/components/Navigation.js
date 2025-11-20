@@ -1,19 +1,20 @@
 import {
-  Assessment as AssessmentIcon,
-  Dashboard as DashboardIcon,
-  Settings as SettingsIcon,
-  Timeline as TimelineIcon,
-  BarChart as VisualizationIcon,
-  Logout as LogoutIcon,
+    Assessment as AssessmentIcon,
+    Code as CodeIcon,
+    Dashboard as DashboardIcon,
+    Logout as LogoutIcon,
+    Settings as SettingsIcon,
+    Timeline as TimelineIcon,
+    BarChart as VisualizationIcon,
 } from '@mui/icons-material';
 import {
-  Box,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
+    Box,
+    Drawer,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { clearAuthToken } from '../services/api';
@@ -30,6 +31,11 @@ const menuItems = [
     text: 'Validation',
     icon: <AssessmentIcon />,
     path: '/validation-results',
+  },
+  {
+    text: 'RPC Functions',
+    icon: <CodeIcon />,
+    path: '/rpc-validation',
   },
   {
     text: 'Visualization',
