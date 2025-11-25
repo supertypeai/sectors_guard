@@ -34,7 +34,6 @@ import {
   useTheme
 } from '@mui/material';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from 'react-query';
 import { validationAPI } from '../services/api';
 
@@ -155,7 +154,6 @@ const RPC_FUNCTIONS = [
 
 const RPCValidation = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [loadingFunctions, setLoadingFunctions] = useState({});
   const [selectedResult, setSelectedResult] = useState(null);
@@ -285,8 +283,15 @@ const RPCValidation = () => {
         </Box>
       </Box>
 
+      {/* Loading State */}
+      {resultsLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
       {/* RPC Functions Grid - Grouped by Category */}
-      {Object.entries(groupedFunctions).map(([category, functions]) => (
+      {!resultsLoading && Object.entries(groupedFunctions).map(([category, functions]) => (
         <Box key={category} sx={{ mb: 4 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: theme.palette.text.secondary }}>
             {category}
