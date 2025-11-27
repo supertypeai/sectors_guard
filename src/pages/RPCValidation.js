@@ -156,33 +156,61 @@ const RPCValidation = () => {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const [loadingFunctions, setLoadingFunctions] = useState({});
+  const [runningAll, setRunningAll] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Fetch validation results from database with auto-refresh
+  // Fetch RPC validation results from dedicated endpoint with auto-refresh
   const { data: validationResults, isLoading: resultsLoading } = useQuery(
-    'validation-results',
-    () => validationAPI.getResults(),
+    'rpc-validation-results',
+    () => validationAPI.getRPCResults(null, 50),
     {
       refetchInterval: 30000, // Refresh every 30 seconds
     }
   );
 
-  // Build results map from database data
+  // Build results map from RPC validation data
   const results = {};
   const allResults = validationResults?.data?.data?.results || [];
   
   if (Array.isArray(allResults)) {
     allResults.forEach(result => {
-      // Check if this is an RPC validation result (table_name starts with 'rpc_')
-      if (result.table_name && result.table_name.startsWith('rpc_')) {
-        // Extract function name from table_name (e.g., "rpc_get_idx_mcap_data_1m" -> "get_idx_mcap_data_1m")
-        const functionName = result.table_name.replace('rpc_', '');
-        
-        // Keep only the latest result for each function (results are sorted by timestamp desc)
-        if (!results[functionName]) {
-          results[functionName] = result;
+      if (result.table_name) {
+        if (result.table_name === 'rpc_functions') {
+          // Parse anomalies from rpc_functions combined validation
+          let anomalies = [];
+          if (result.anomalies) {
+            try {
+              anomalies = typeof result.anomalies === 'string' 
+                ? JSON.parse(result.anomalies) 
+                : result.anomalies;
+            } catch (e) {
+              anomalies = [];
+            }
+          }
+          
+          // Group anomalies by rpc_function field
+          anomalies.forEach(anomaly => {
+            const funcName = anomaly.rpc_function?.replace(/\(.*\)/, '') || '';
+            if (funcName && !results[funcName]) {
+              const funcAnomalies = anomalies.filter(a => 
+                a.rpc_function?.replace(/\(.*\)/, '') === funcName
+              );
+              results[funcName] = {
+                ...result,
+                anomalies_count: funcAnomalies.length,
+                anomalies: funcAnomalies,
+                status: funcAnomalies.length > 0 ? 'error' : 'success'
+              };
+            }
+          });
+        } else if (result.table_name.startsWith('rpc_')) {
+          // Individual RPC function validation (e.g., "rpc_get_idx_mcap_data_1m")
+          const functionName = result.table_name.replace('rpc_', '');
+          if (!results[functionName]) {
+            results[functionName] = result;
+          }
         }
       }
     });
@@ -196,7 +224,7 @@ const RPCValidation = () => {
       const result = response.data || response;
       
       // Invalidate queries to refresh data from database
-      queryClient.invalidateQueries('validation-results');
+      queryClient.invalidateQueries('rpc-validation-results');
       
       setSnackbar({
         open: true,
@@ -212,6 +240,34 @@ const RPCValidation = () => {
       });
     } finally {
       setLoadingFunctions(prev => ({ ...prev, [functionName]: false }));
+    }
+  };
+
+  const handleRunAll = async () => {
+    setRunningAll(true);
+    
+    try {
+      const response = await validationAPI.runAllRPCValidation();
+      const result = response.data || response;
+      
+      // Invalidate queries to refresh data from database
+      queryClient.invalidateQueries('rpc-validation-results');
+      
+      const anomalyCount = result.anomalies_count || 0;
+      setSnackbar({
+        open: true,
+        message: `All RPC validations completed! ${anomalyCount} issue${anomalyCount !== 1 ? 's' : ''} found.`,
+        severity: anomalyCount > 0 ? 'warning' : 'success'
+      });
+    } catch (error) {
+      console.error('Error running all RPC validations:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to run all RPC validations',
+        severity: 'error'
+      });
+    } finally {
+      setRunningAll(false);
     }
   };
 
@@ -482,6 +538,34 @@ const RPCValidation = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Floating Button - Run All */}
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleRunAll}
+        disabled={runningAll}
+        sx={{
+          position: 'fixed',
+          bottom: 32,
+          right: 32,
+          zIndex: 1000,
+          px: 3,
+          py: 1.5,
+          borderRadius: 2,
+          fontWeight: 'bold',
+          boxShadow: theme.shadows[8],
+          '&:hover': {
+            boxShadow: theme.shadows[12],
+          }
+        }}
+      >
+        {runningAll ? (
+          <CircularProgress size={24} color="inherit" />
+        ) : (
+          'Run All'
+        )}
+      </Button>
     </Container>
   );
 };

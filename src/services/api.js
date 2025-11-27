@@ -126,9 +126,36 @@ export const validationAPI = {
       return response;
     });
   },
+  getRPCResults: (functionName = null, limit = 20) => {
+    let url = '/dashboard/rpc-results';
+    const params = new URLSearchParams();
+    
+    if (functionName) params.append('function_name', functionName);
+    if (limit) params.append('limit', limit.toString());
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    return api.get(url).then(response => {
+      if (response.data.source === 'local_storage') {
+        console.warn('⚠️ Using local storage - database unavailable');
+      }
+      return response;
+    });
+  },
+  getRPCResultsByFunction: (functionName, limit = 5) => {
+    return api.get(`/dashboard/rpc-results/by-function/${functionName}?limit=${limit}`).then(response => {
+      if (response.data.source === 'local_storage') {
+        console.warn('⚠️ Using local storage - database unavailable');
+      }
+      return response;
+    });
+  },
   getTableConfig: (tableName) => api.get(`/validation/config/${tableName}`),
   saveTableConfig: (tableName, payload) => api.post(`/validation/config/${tableName}`, payload),
   runSingleRPCValidation: (functionName) => api.post(`/validation/run/rpc-functions/${functionName}`),
+  runAllRPCValidation: () => api.post('/validation/run/rpc-functions'),
 };
 
 // Sheet monitoring API
