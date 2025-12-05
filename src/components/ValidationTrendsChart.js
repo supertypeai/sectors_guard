@@ -63,7 +63,7 @@ function ValidationTrendsChart({ data, loading }) {
           <Line 
             type="monotone" 
             dataKey="anomalies" 
-            stroke={theme.palette.error.main}
+            stroke={theme.palette.warning.main}
             strokeWidth={2}
             name="Anomalies Detected"
           />

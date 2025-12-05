@@ -152,6 +152,7 @@ function ValidationResults() {
       case 'success':
         return 'success';
       case 'warning':
+      case 'flagged':
         return 'warning';
       case 'error':
         return 'error';
@@ -166,6 +167,8 @@ function ValidationResults() {
         return <CheckCircle sx={{ color: 'success.main' }} />;
       case 'warning':
         return <Warning sx={{ color: 'warning.main' }} />;
+      case 'flagged':
+        return <Warning sx={{ color: 'warning.main' }} />;
       case 'error':
         return <Error sx={{ color: 'error.main' }} />;
       default:
@@ -175,8 +178,8 @@ function ValidationResults() {
 
   const getSeverityIcon = (severity) => {
     switch (severity) {
-      case 'error':
-        return <Error sx={{ color: 'error.main', fontSize: 18 }} />;
+      case 'flagged':
+        return <Warning sx={{ color: 'warning.main', fontSize: 18 }} />;
       case 'warning':
         return <Warning sx={{ color: 'warning.main', fontSize: 18 }} />;
       case 'info':
@@ -481,7 +484,7 @@ function ValidationResults() {
                           <TableCell sx={{ fontWeight: 600 }}>Table Name</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">Total Rows</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">Anomalies</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Flagged</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Timestamp</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
                         </TableRow>
@@ -523,7 +526,7 @@ function ValidationResults() {
                               <Chip
                                 label={result.anomalies_count || 0}
                                 size="small"
-                                color={result.anomalies_count > 0 ? 'error' : 'default'}
+                                color={result.anomalies_count > 0 ? 'warning' : 'default'}
                                 sx={{ fontWeight: 600, borderRadius: 2 }}
                               />
                             </TableCell>
@@ -581,7 +584,7 @@ function ValidationResults() {
                         <TableRow sx={{ backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05) }}>
                           <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">Total Rows</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">Anomalies</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }} align="right">Flagged</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Timestamp</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
                         </TableRow>
@@ -618,7 +621,7 @@ function ValidationResults() {
                               <Chip
                                 label={result.anomalies_count || 0}
                                 size="small"
-                                color={result.anomalies_count > 0 ? 'error' : 'default'}
+                                color={result.anomalies_count > 0 ? 'warning' : 'default'}
                                 sx={{ fontWeight: 600, borderRadius: 2 }}
                               />
                             </TableCell>
@@ -732,7 +735,7 @@ function ValidationResults() {
                                   <Chip label={`Symbol: ${anomaly.symbol}`} size="small" sx={{ bgcolor: (theme) => alpha(theme.palette.background.default, 0.3), color: 'text.secondary' }} />
                                 )}
                                 {anomaly.severity && (
-                                  <Chip label={anomaly.severity.toUpperCase()} size="small" sx={{ bgcolor: (theme) => alpha(anomaly.severity === 'error' ? theme.palette.error.main : theme.palette.warning.main, 0.12), color: anomaly.severity === 'error' ? 'error.light' : 'warning.main' }} />
+                                  <Chip label={anomaly.severity === 'error' ? 'FLAGGED' : anomaly.severity.toUpperCase()} size="small" sx={{ bgcolor: (theme) => alpha(theme.palette.warning.main, 0.12), color: 'warning.main' }} />
                                 )}
                               </Box>
                             </Box>

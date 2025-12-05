@@ -26,6 +26,7 @@ export const getStatusColor = (status) => {
     case 'success':
       return 'success';
     case 'warning':
+    case 'flagged':
       return 'warning';
     case 'error':
       return 'error';
@@ -39,7 +40,8 @@ export const getStatusIcon = (status) => {
     case 'success':
       return '✅';
     case 'warning':
-      return '⚠️';
+    case 'flagged':
+      return '🚩';
     case 'error':
       return '❌';
     default:

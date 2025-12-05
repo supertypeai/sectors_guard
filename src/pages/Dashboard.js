@@ -221,7 +221,7 @@ function Dashboard() {
             variant="subtitle1" 
             sx={{ color: 'text.secondary', mb: 3 }}
           >
-            Real-time monitoring and anomaly detection for Indonesian Stock Exchange
+            Real-time monitoring and data validation for Indonesian Stock Exchange
           </Typography>
         </Box>
       </Fade>

@@ -4,6 +4,7 @@ import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recha
 const mapColors = (theme) => ({
   healthy: theme.palette.success.main,
   warning: theme.palette.warning.main,
+  flagged: theme.palette.warning.main,
   error: theme.palette.error.main,
 });
 

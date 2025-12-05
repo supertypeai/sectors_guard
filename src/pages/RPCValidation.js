@@ -201,7 +201,7 @@ const RPCValidation = () => {
                 ...result,
                 anomalies_count: funcAnomalies.length,
                 anomalies: funcAnomalies,
-                status: funcAnomalies.length > 0 ? 'error' : 'success'
+                status: funcAnomalies.length > 0 ? 'flagged' : 'success'
               };
             }
           });
@@ -306,9 +306,9 @@ const RPCValidation = () => {
     
     return (
       <Chip
-        label={isSuccess ? '✓ Valid' : `⚠ ${anomalyCount} Issue${anomalyCount !== 1 ? 's' : ''}`}
+        label={isSuccess ? '✓ Valid' : `🚩 ${anomalyCount} Flagged`}
         size="small"
-        color={isSuccess ? 'success' : 'error'}
+        color={isSuccess ? 'success' : 'warning'}
         sx={{ fontWeight: 600 }}
       />
     );
@@ -506,7 +506,7 @@ const RPCValidation = () => {
                     Anomalies Detected:
                   </Typography>
                   {selectedResult.data.anomalies.map((anomaly, idx) => (
-                    <Alert severity={anomaly.severity || 'warning'} key={idx} sx={{ mb: 1 }}>
+                    <Alert severity="warning" key={idx} sx={{ mb: 1 }}>
                       <Typography variant="body2" fontWeight="bold">{anomaly.type}</Typography>
                       <Typography variant="body2">{anomaly.message}</Typography>
                       {anomaly.expected_date && (
@@ -519,7 +519,7 @@ const RPCValidation = () => {
                 </Box>
               ) : (
                 <Alert severity="success">
-                  ✅ No anomalies detected. Function is working correctly!
+                  ✅ No issues detected. Function is working correctly!
                 </Alert>
               )}
             </DialogContent>

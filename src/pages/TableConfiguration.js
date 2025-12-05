@@ -270,17 +270,17 @@ function TableConfiguration() {
             }
             subheader={
               <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                Configure error threshold and notification settings
+                Configure flag threshold and notification settings
               </Typography>
             }
           />
           <CardContent>
             <Grid container spacing={3}>
-              {/* Error Threshold */}
+              {/* Flag Threshold */}
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Error Threshold"
+                  label="Flag Threshold"
                   type="number"
                   value={errorThreshold}
                   onChange={(e) => {
@@ -288,11 +288,11 @@ function TableConfiguration() {
                     setErrors(prev => ({ ...prev, threshold: '' }));
                   }}
                   error={!!errors.threshold}
-                  helperText={errors.threshold || "Number of anomalies before marking as error"}
+                  helperText={errors.threshold || "Number of issues before flagging"}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <ErrorIcon sx={{ color: '#ef4444' }} />
+                        <ErrorIcon sx={{ color: '#f59e0b' }} />
                       </InputAdornment>
                     ),
                   }}
@@ -491,10 +491,10 @@ function TableConfiguration() {
                 
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <ErrorIcon sx={{ fontSize: 16, color: '#ef4444' }} />
-                    <Typography variant="subtitle2" sx={{ color: '#94a3b8' }}>Error Threshold:</Typography>
+                    <ErrorIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+                    <Typography variant="subtitle2" sx={{ color: '#94a3b8' }}>Flag Threshold:</Typography>
                   </Box>
-                  <Typography sx={{ color: '#ffffff', ml: 3 }}>{errorThreshold} anomalies</Typography>
+                  <Typography sx={{ color: '#ffffff', ml: 3 }}>{errorThreshold} items</Typography>
                 </Grid>
                 
                 <Grid item xs={12}>
