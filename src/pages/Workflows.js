@@ -10,6 +10,7 @@ import {
   InputLabel,
   Link,
   MenuItem,
+  Tooltip as MuiTooltip,
   Paper,
   Select,
   Table,
@@ -30,10 +31,13 @@ import { getCachedSheet, setCachedSheet } from '../services/sheetCache';
 const STATUS_COLORS = {
   Success: (theme) => theme.palette.success.main,
   success: (theme) => theme.palette.success.main,
+  succeeded: (theme) => theme.palette.success.main,
   Failure: (theme) => theme.palette.error.main,
   failure: (theme) => theme.palette.error.main,
+  failed: (theme) => theme.palette.error.main,
   Running: (theme) => theme.palette.primary.light,
   in_progress: (theme) => theme.palette.primary.light,
+  running: (theme) => theme.palette.primary.light,
   Queued: (theme) => theme.palette.warning.main,
   queued: (theme) => theme.palette.warning.main,
   Unknown: (theme) => theme.palette.text.secondary,
@@ -95,11 +99,48 @@ export default function Workflows() {
     }
   );
 
+  const { data: cronJobsData, isLoading: cronJobsLoading, error: cronJobsError } = useQuery(
+    'cron-jobs',
+    () => dashboardAPI.getCronJobs(200),
+    { refetchInterval: 60_000 }
+  );
+
+  const [cronStatusFilter, setCronStatusFilter] = useState('all');
+
   // Memoize rows to avoid creating a new array each render and breaking hook deps
   const sheetRows = data?.data?.data;
   const rows = useMemo(() => (Array.isArray(sheetRows) ? sheetRows : []), [sheetRows]);
   const httpStatus = data?.status;
   const githubActions = githubActionsData?.data || {};
+
+  const allCronJobs = useMemo(() => cronJobsData?.data?.data || [], [cronJobsData]);
+
+  const cronJobs = useMemo(() => {
+    if (cronStatusFilter === 'all') return allCronJobs;
+    return allCronJobs.filter(r => r.status === cronStatusFilter);
+  }, [allCronJobs, cronStatusFilter]);
+
+  const uniqueCronStatuses = useMemo(() => {
+    return [...new Set(allCronJobs.map(r => r.status).filter(Boolean))].sort();
+  }, [allCronJobs]);
+
+  const cronMetrics = useMemo(() => {
+    const total = allCronJobs.length;
+    const succeeded = allCronJobs.filter(r => r.status === 'succeeded').length;
+    const failed = allCronJobs.filter(r => r.status === 'failed').length;
+    return { total, succeeded, failed };
+  }, [allCronJobs]);
+
+  function formatDuration(start, end) {
+    if (!start || !end) return '—';
+    try {
+      const ms = new Date(end) - new Date(start);
+      if (ms < 0) return '—';
+      if (ms < 1000) return `${ms}ms`;
+      if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+      return `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
+    } catch { return '—'; }
+  }
 
   // Filter rows based on selected status
   const filteredRows = useMemo(() => {
@@ -397,6 +438,141 @@ export default function Workflows() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* ── Cron Job Run Details ─────────────────────────────────────── */}
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 2, mt: 4 }}>
+        Cron Job Run Details
+      </Typography>
+
+      {cronJobsError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Failed to load cron job data: {cronJobsError.message}
+        </Alert>
+      )}
+
+      {/* Summary cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>Total Runs</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>{cronMetrics.total}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>Succeeded</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: (theme) => theme.palette.success.main }}>
+                {cronMetrics.succeeded}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>Failed</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: (theme) => theme.palette.error.main }}>
+                {cronMetrics.failed}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              Recent Runs
+              {allCronJobs.length > 0 && (
+                <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
+                  (latest)
+                </Typography>
+              )}
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Status Filter</InputLabel>
+              <Select
+                value={cronStatusFilter}
+                onChange={(e) => setCronStatusFilter(e.target.value)}
+                label="Status Filter"
+              >
+                <MenuItem value="all">All</MenuItem>
+                {uniqueCronStatuses.map((s) => (
+                  <MenuItem key={s} value={s}>{s}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {cronJobsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Job ID</TableCell>
+                    <TableCell>Start Time</TableCell>
+                    <TableCell>End Time</TableCell>
+                    <TableCell>Duration</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Return Message</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {cronJobs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ color: 'text.secondary', py: 3 }}>
+                        No cron job runs found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    cronJobs.map((row, idx) => (
+                      <TableRow key={`${row.jobid ?? idx}`} hover>
+                        <TableCell>{row.jobid ?? '—'}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {row.start_time ? new Date(row.start_time).toLocaleString() : '—'}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {row.end_time ? new Date(row.end_time).toLocaleString() : '—'}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {formatDuration(row.start_time, row.end_time)}
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip status={row.status} />
+                        </TableCell>
+                        <TableCell sx={{ maxWidth: 220, overflow: 'hidden' }}>
+                          <MuiTooltip title={row.return_message || ''} placement="top">
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                display: 'block',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                maxWidth: 220,
+                              }}
+                            >
+                              {row.return_message || '—'}
+                            </Typography>
+                          </MuiTooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </CardContent>
+      </Card>
     </Box>
   );
 }

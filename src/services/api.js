@@ -78,6 +78,7 @@ export const dashboardAPI = {
   getValidationTrends: () => api.get('/dashboard/charts/validation-trends'),
   getTableStatus: () => api.get('/dashboard/charts/table-status'),
   getGithubActionsStatus: () => api.get('/dashboard/github-actions'),
+  getCronJobs: (limit = 200) => api.get('/dashboard/cron-jobs', { params: { limit } }),
 };
 
 export const validationAPI = {
