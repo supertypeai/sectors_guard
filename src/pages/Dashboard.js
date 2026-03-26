@@ -110,6 +110,13 @@ const ALL_TABLES = [
   validationRule: 'Multiple stock splits within 14 days for the same symbol'
   },
   {
+    name: 'idx_agm',
+    icon: <CheckCircle />,
+    description: 'AGM schedule integrity validation between recording and AGM dates',
+    validationType: 'AGM Date Validation',
+    validationRule: 'recording_date must be earlier than agm_date'
+  },
+  {
     name: 'idx_news',
     icon: <Warning />,
     description: 'News table subsector tagging validation (max 5 unique subsectors)',
