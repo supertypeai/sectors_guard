@@ -112,9 +112,9 @@ const ALL_TABLES = [
   {
     name: 'idx_agm',
     icon: <CheckCircle />,
-    description: 'AGM schedule integrity validation between recording and AGM dates',
+    description: 'AGM schedule integrity and completeness validation',
     validationType: 'AGM Date Validation',
-    validationRule: 'recording_date must be earlier than agm_date'
+    validationRule: 'recording_date < agm_date; no duplicate agm_date per symbol; agm_place and agm_place_desc required for AGM dates in the past 7 days'
   },
   {
     name: 'idx_news',
