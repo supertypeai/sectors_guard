@@ -86,7 +86,14 @@ const ALL_TABLES = [
     icon: <MonetizationOn />,
     description: 'Dividend Data - Yield analysis and change detection',
     validationType: 'Dividend Analysis',
-  validationRule: 'Average annual yield ≥30% or year-on-year yield change ≥10%'
+    validationRule: 'Average annual yield ≥30% or year-on-year yield change ≥10%; dividend_original ≥ 1 rupiah'
+  },
+  {
+    name: 'idx_upcoming_dividend',
+    icon: <MonetizationOn />,
+    description: 'Upcoming Dividend Data - Minimum dividend amount validation',
+    validationType: 'Upcoming Dividend Validation',
+    validationRule: 'dividend_amount must be ≥ 1 rupiah'
   },
   {
     name: 'idx_all_time_price',
