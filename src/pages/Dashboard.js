@@ -172,6 +172,13 @@ const ALL_TABLES = [
     validationType: 'RPC Functions Validation',
     validationRule: 'Validates get_idx_mcap_data_1m, get_indices_price_changes, get_top_mcap_gainers/losers, get_top_gainers/losers, get_peers_and_idx_valuation_summary, get_idx_peers_growth_and_forecasts, get_news_per_dimensions_by_ticker_subsector, get_idx_yield_ttm, get_companies_loan_quality, get_idx_resilience, get_companies_state_owned, get_upcoming_dividends_and_splits, get_idx_most_traded, get_idx_volume'
   },
+  {
+    name: 'sgx_companies',
+    icon: <TableChart />,
+    description: 'SGX companies sector and sub-sector classification validation',
+    validationType: 'SGX Companies Validation',
+    validationRule: 'Active and non-suspended companies must not have Unknown sector or sub_sector'
+  },
 ];
 
 function Dashboard() {
