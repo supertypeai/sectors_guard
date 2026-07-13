@@ -22,11 +22,11 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { dashboardAPI, sheetAPI } from '../services/api';
-import { getCachedSheet, setCachedSheet } from '../services/sheetCache';
+
 
 const STATUS_COLORS = {
   Success: (theme) => theme.palette.success.main,
@@ -74,20 +74,45 @@ function topRuns(runs = [], limit = 3) {
 export default function Workflows() {
   const theme = useTheme();
   const [statusFilter, setStatusFilter] = useState('all');
-  // Cache-aware fetcher: try localStorage (today) first; only hit network if missing
-  const fetchSheet = async () => {
-    const cached = getCachedSheet();
-    if (cached && Array.isArray(cached)) {
-      // mimic axios-like shape expected below by returning { data: { data: cached } }
-      return { data: { data: cached } };
+  const [sourceFilter, setSourceFilter] = useState('all');
+
+  // Sheet reads always go to the network. The localStorage cache layer has been
+  // a recurring source of cross-sheet pollution; the backend already caches the
+  // CSV on disk and `refetchInterval` below re-reads on a 60s cadence.
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.removeItem('sheet_json_cache:workflows');
+      localStorage.removeItem('sheet_json_cache:cron');
+      localStorage.removeItem('sheet_json_cache');
+    } catch (_) {
+      // ignore
     }
-    const resp = await sheetAPI.getSheetJson();
-    const rows = resp?.data?.data || [];
-    setCachedSheet(rows);
-    return resp;
+  }, []);
+
+  // Fetch both sheets in parallel; tag each row with a source so the table
+  // can show the differentiator and the source filter can scope the view.
+  const fetchSheets = async () => {
+    const entries = [
+      { name: 'workflows', source: 'GitHub Action' },
+      { name: 'cron', source: 'Cron' },
+    ];
+    const results = await Promise.all(
+      entries.map(async ({ name, source }) => {
+        const resp = await sheetAPI.getSheetJson(name);
+        const rows = Array.isArray(resp?.data?.data) ? resp.data.data : [];
+        return { name, source, rows };
+      })
+    );
+    const out = { rows: [], sources: { workflows: 0, cron: 0 } };
+    for (const { name, source, rows } of results) {
+      out.sources[name] = rows.length;
+      for (const r of rows) out.rows.push({ ...r, __source: source });
+    }
+    return out;
   };
 
-  const { data, isLoading, error } = useQuery('sheet-json', fetchSheet, {
+  const { data, isLoading, error } = useQuery('sheet-json-merged', fetchSheets, {
     refetchInterval: 60_000,
   });
 
@@ -108,9 +133,7 @@ export default function Workflows() {
   const [cronStatusFilter, setCronStatusFilter] = useState('all');
 
   // Memoize rows to avoid creating a new array each render and breaking hook deps
-  const sheetRows = data?.data?.data;
-  const rows = useMemo(() => (Array.isArray(sheetRows) ? sheetRows : []), [sheetRows]);
-  const httpStatus = data?.status;
+  const rows = useMemo(() => (Array.isArray(data?.rows) ? data.rows : []), [data]);
   const githubActions = githubActionsData?.data || {};
 
   const allCronJobs = useMemo(() => cronJobsData?.data?.data || [], [cronJobsData]);
@@ -142,13 +165,14 @@ export default function Workflows() {
     } catch { return '—'; }
   }
 
-  // Filter rows based on selected status
+  // Filter rows based on selected status and source
   const filteredRows = useMemo(() => {
-    if (statusFilter === 'all') {
-      return rows;
-    }
-    return rows.filter(row => row['Last Run Status'] === statusFilter);
-  }, [rows, statusFilter]);
+    return rows.filter((row) => {
+      if (sourceFilter !== 'all' && row.__source !== sourceFilter) return false;
+      if (statusFilter !== 'all' && row['Last Run Status'] !== statusFilter) return false;
+      return true;
+    });
+  }, [rows, statusFilter, sourceFilter]);
 
   // Get unique status values for filter dropdown
   const uniqueStatuses = useMemo(() => {
@@ -179,12 +203,6 @@ export default function Workflows() {
         Workflows Monitor
       </Typography>
 
-      {httpStatus === 204 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          No cached sheet found yet. Trigger a fetch on the backend, then refresh.
-        </Alert>
-      )}
-
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           Failed to load sheet data: {error.message}
@@ -195,7 +213,7 @@ export default function Workflows() {
         <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>Total Workflows</Typography>
+              <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>Total Monitored</Typography>
               <Typography variant="h5" sx={{ fontWeight: 700 }}>{metrics.total}</Typography>
             </CardContent>
           </Card>
@@ -255,28 +273,43 @@ export default function Workflows() {
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Recent Checks</Typography>
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>Status Filter</InputLabel>
-                  <Select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    label="Status Filter"
-                  >
-                    <MenuItem value="all">All</MenuItem>
-                    {uniqueStatuses.map((status) => (
-                      <MenuItem key={status} value={status}>
-                        {status}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <FormControl size="small" sx={{ minWidth: 130 }}>
+                    <InputLabel>Source</InputLabel>
+                    <Select
+                      value={sourceFilter}
+                      onChange={(e) => setSourceFilter(e.target.value)}
+                      label="Source"
+                    >
+                      <MenuItem value="all">All Sources</MenuItem>
+                      <MenuItem value="GitHub Action">GitHub Action</MenuItem>
+                      <MenuItem value="Cron">Cron</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel>Status Filter</InputLabel>
+                    <Select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      label="Status Filter"
+                    >
+                      <MenuItem value="all">All</MenuItem>
+                      {uniqueStatuses.map((status) => (
+                        <MenuItem key={status} value={status}>
+                          {status}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
               </Box>
               <TableContainer component={Paper}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
+                      <TableCell>Source</TableCell>
                       <TableCell>Repo</TableCell>
                       <TableCell>Workflow</TableCell>
                       <TableCell>Status</TableCell>
@@ -288,8 +321,17 @@ export default function Workflows() {
                   <TableBody>
                     {filteredRows.map((r, idx) => (
                       <TableRow key={idx}>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={r.__source || '—'}
+                            color={r.__source === 'Cron' ? 'secondary' : 'primary'}
+                            variant="outlined"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </TableCell>
                         <TableCell>{r.Owner}/{r.Repo}</TableCell>
-                        <TableCell>{r['Workflow File']}</TableCell>
+                        <TableCell>{r['Workflow File'] || r.Name || '—'}</TableCell>
                         <TableCell><StatusChip status={r['Last Run Status']} /></TableCell>
                         <TableCell>{r['Last Success'] || '—'}</TableCell>
                         <TableCell>{r['Last Failure'] || '—'}</TableCell>

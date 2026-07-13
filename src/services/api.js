@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 // Base URL configuration (keep env override support)
-const API_HOST = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const API_BASE_URL = `${API_HOST.replace(/\/+$/, '')}/api`;
+const API_HOST = (process.env.REACT_APP_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+// If REACT_APP_API_URL already ends with /api, don't append it again.
+const API_BASE_URL = /\/api$/.test(API_HOST) ? API_HOST : `${API_HOST}/api`;
 
 // Token management (runtime, persisted in localStorage)
 const TOKEN_STORAGE_KEY = 'api_token';
@@ -161,7 +162,7 @@ export const validationAPI = {
 
 // Sheet monitoring API
 export const sheetAPI = {
-  getSheetJson: () => api.get('/sheet', { params: { format: 'json' } }),
+  getSheetJson: (sheet = 'workflows') => api.get('/sheet', { params: { format: 'json', sheet } }),
 };
 
 export default api;
