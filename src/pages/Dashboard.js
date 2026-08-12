@@ -179,6 +179,13 @@ const ALL_TABLES = [
     validationType: 'SGX Companies Validation',
     validationRule: 'Active and non-suspended companies must not have Unknown sector or sub_sector'
   },
+  {
+    name: 'sgx_reit_guard',
+    icon: <AccountBalance />,
+    description: 'Whole-database invariant checks for prod SGX REIT tables',
+    validationType: 'SGX REIT Guard',
+    validationRule: 'scale, enums, sums, keys, nulls, tallies, coverage, segments'
+  },
 ];
 
 function Dashboard() {
