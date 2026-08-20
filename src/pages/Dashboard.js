@@ -186,6 +186,13 @@ const ALL_TABLES = [
     validationType: 'SGX REIT Guard',
     validationRule: 'scale, enums, sums, keys, nulls, tallies, coverage, segments'
   },
+  {
+    name: 'sgx_agm_guard',
+    icon: <TableChart />,
+    description: 'Whole-table invariant checks for prod sgx_agm',
+    validationType: 'SGX AGM Guard',
+    validationRule: 'enums, format, consistency, sias, freshness'
+  },
 ];
 
 function Dashboard() {
