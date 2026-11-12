@@ -193,6 +193,14 @@ const ALL_TABLES = [
     validationType: 'SGX AGM Guard',
     validationRule: 'enums, format, consistency, sias, freshness'
   },
+  {
+    name: 'sgx_periodic_guard',
+    displayName: 'SGX Periodic Guard',
+    icon: <TrendingUp />,
+    description: 'Whole-table invariant checks for sgx_periodic_financial (SGX H1/H2 income statement, balance sheet, cash flow)',
+    validationType: 'SGX Periodic Guard',
+    validationRule: 'keys, nulls, labels, tallies, halves, annual, jumps, coverage'
+  },
 ];
 
 function Dashboard() {

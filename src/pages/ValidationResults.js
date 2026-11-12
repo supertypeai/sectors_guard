@@ -53,7 +53,9 @@ import moment from 'moment';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 
+import GroupedAnomalies from '../components/GroupedAnomalies';
 import { validationAPI } from '../services/api';
+import { getGroupedAnomalyConfig } from '../utils/groupedAnomalyConfigs';
 
 function ValidationResults() {
   const theme = useTheme();
@@ -92,9 +94,11 @@ function ValidationResults() {
   const runValidationMutation = useMutation(
     ({ tableName, startDate, endDate }) => validationAPI.runValidation(tableName, startDate, endDate),
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries('validation-results');
-        queryClient.invalidateQueries('dashboard-stats');
+      onSuccess: (response) => {
+        const validationResult = response.data;
+
+        setSelectedResult(validationResult);
+        setDetailsOpen(true);
       },
     }
   );
@@ -701,9 +705,23 @@ function ValidationResults() {
               </Grid>
 
               {(() => {
-                const anomalies = typeof selectedResult.anomalies === 'string' 
-                  ? JSON.parse(selectedResult.anomalies) 
+                const anomalies = typeof selectedResult.anomalies === 'string'
+                  ? JSON.parse(selectedResult.anomalies)
                   : selectedResult.anomalies;
+
+                // Tables with hundreds of rows (sgx periodic guard, sgx filings), grouped by check instead of one long list
+                const groupedConfig = getGroupedAnomalyConfig(selectedResult.table_name);
+
+                if (groupedConfig) {
+                  return anomalies && anomalies.length > 0 && (
+                    <GroupedAnomalies
+                      anomalies={anomalies}
+                      columns={groupedConfig.columns}
+                      descriptions={groupedConfig.descriptions}
+                    />
+                  );
+                }
+
                 return anomalies && anomalies.length > 0 && (
                   <Box>
                     <Typography variant="h6" sx={{ mb: 2, color: 'text.primary' }}>
