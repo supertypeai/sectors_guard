@@ -58,7 +58,7 @@ const IDX_FILINGS = {
   descriptions: {
     transaction_type_mismatch: 'Holdings went down but transaction_type is buy, or went up but it is sell',
     holding_mismatch: 'holding_before + net shares from price_transaction does not equal holding_after',
-    transaction_price_correction_candidate: 'A price_transaction price is outside the market range, but price / amount_transacted is inside it (likely a total value)',
+    transaction_price_correction_candidate: 'A price_transaction price is outside the market range, but price / amount_transacted, or price / the holdings change, is inside it (likely a total value)',
     filing_price_discrepancy: 'price differs from the daily close on the filing date by 50% or more',
     duplicate_transaction: 'Same symbol, date, holder_name, transaction_type, holdings before and after, and transaction_value',
     correction_document_candidate: 'A newer filing has the same holder, holdings and transaction date as an older one, so it may be a correction',
