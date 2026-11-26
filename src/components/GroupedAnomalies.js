@@ -46,14 +46,14 @@ function groupByCheck(anomalies) {
 // Anomalies grouped by type, one collapsible table per type.
 // columns: [{ label, value: (row) => text, bold, muted }], the Detail column is
 // always the anomaly's message. descriptions: { type: 'shown under the title' }
-function GroupedAnomalies({ anomalies, columns, descriptions }) {
+function GroupedAnomalies({ anomalies, columns, descriptions, symbolExample = 'D05' }) {
   const [symbolFilter, setSymbolFilter] = useState('');
 
   const groups = useMemo(() => {
     const filter = symbolFilter.trim().toUpperCase();
 
     const filtered = filter
-      ? anomalies.filter((anomaly) => (anomaly.symbol || '').toUpperCase().includes(filter))
+      ? anomalies.filter((anomaly) => (anomaly.symbol || anomaly.ticker || '').toUpperCase().includes(filter))
       : anomalies;
 
     return groupByCheck(filtered);
@@ -69,7 +69,7 @@ function GroupedAnomalies({ anomalies, columns, descriptions }) {
         </Typography>
         <TextField
           size="small"
-          placeholder="Filter by symbol, e.g. D05"
+          placeholder={`Filter by symbol, e.g. ${symbolExample}`}
           value={symbolFilter}
           onChange={(event) => setSymbolFilter(event.target.value)}
           InputProps={{

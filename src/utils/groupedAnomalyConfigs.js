@@ -43,9 +43,37 @@ const SGX_FILINGS = {
   },
 };
 
+const IDX_FILINGS = {
+  symbolExample: 'BBCA',
+  columns: [
+    {
+      label: 'ID',
+      value: (row) => (row.older_record_id ? `${row.record_id} (older: ${row.older_record_id})` : row.record_id),
+      bold: true,
+    },
+    { label: 'Symbol', value: (row) => row.symbol || row.ticker },
+    { label: 'Holder', value: (row) => row.holder_name, muted: true },
+    { label: 'Date', value: (row) => row.filing_date || row.transaction_date },
+  ],
+  descriptions: {
+    transaction_type_mismatch: 'Holdings went down but transaction_type is buy, or went up but it is sell',
+    holding_mismatch: 'holding_before + net shares from price_transaction does not equal holding_after',
+    transaction_price_correction_candidate: 'A price_transaction price is outside the market range, but price / amount_transacted is inside it (likely a total value)',
+    filing_price_discrepancy: 'price differs from the daily close on the filing date by 50% or more',
+    duplicate_transaction: 'Same symbol, date, holder_name, transaction_type, holdings before and after, and transaction_value',
+    correction_document_candidate: 'A newer filing has the same holder, holdings and transaction date as an older one, so it may be a correction',
+    missing_required_columns: 'timestamp, symbol or price is missing from the data',
+    validation_error: 'The validation failed to run',
+  },
+};
+
 export function getGroupedAnomalyConfig(tableName) {
   if (tableName?.startsWith('sgx_periodic_guard')) {
     return PERIODIC_GUARD;
+  }
+
+  if (tableName === 'idx_filings') {
+    return IDX_FILINGS;
   }
 
   if (tableName === 'sgx_filings') {

@@ -709,7 +709,7 @@ function ValidationResults() {
                   ? JSON.parse(selectedResult.anomalies)
                   : selectedResult.anomalies;
 
-                // Tables with hundreds of rows (sgx periodic guard, sgx filings), grouped by check instead of one long list
+                // Tables with hundreds of rows (sgx periodic guard, idx and sgx filings), grouped by check instead of one long list
                 const groupedConfig = getGroupedAnomalyConfig(selectedResult.table_name);
 
                 if (groupedConfig) {
@@ -718,6 +718,7 @@ function ValidationResults() {
                       anomalies={anomalies}
                       columns={groupedConfig.columns}
                       descriptions={groupedConfig.descriptions}
+                      symbolExample={groupedConfig.symbolExample}
                     />
                   );
                 }
